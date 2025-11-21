@@ -50,62 +50,62 @@ export default function Grants() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Available Grants</h1>
-          <p className="text-muted-foreground">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+        <div className="mb-8 border-b-2 border-accent pb-6">
+          <h1 className="mb-2 text-4xl font-bold text-primary">Available Grants</h1>
+          <p className="text-lg text-muted-foreground">
             Discover funding opportunities for your business
           </p>
         </div>
 
         {/* Search and Filter */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search grants by name, description, or sponsor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-12 h-14 text-base"
             />
           </div>
-          <Button variant="outline" className="sm:w-auto">
-            <Filter className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="lg" className="sm:w-auto">
+            <Filter className="mr-2 h-5 w-5" />
             Filters
           </Button>
         </div>
 
         {/* Grants List */}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <div className="flex justify-center py-20">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
           </div>
         ) : filteredGrants.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredGrants.map((grant) => (
               <Link key={grant.id} to={`/grants/${grant.slug}`}>
-                <Card className="h-full transition-all hover:shadow-royal">
+                <Card className="h-full transition-all hover:shadow-premium">
                   <CardHeader>
-                    <div className="mb-3 flex flex-wrap gap-2">
+                    <div className="mb-4 flex flex-wrap gap-2">
                       {grant.target_audience_tags?.slice(0, 2).map((tag: string) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
                       ))}
                       {grant.status === 'open' && (
-                        <Badge className="bg-status-success text-xs text-white">Open</Badge>
+                        <Badge variant="gold" className="text-xs">Open</Badge>
                       )}
                     </div>
-                    <CardTitle className="line-clamp-2 text-lg">{grant.name}</CardTitle>
-                    <CardDescription className="line-clamp-3">
+                    <CardTitle className="line-clamp-2 text-xl">{grant.name}</CardTitle>
+                    <CardDescription className="line-clamp-3 text-base">
                       {grant.short_description}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2 text-sm">
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3 text-base">
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Amount:</span>
                         <span className="font-semibold text-accent">
@@ -136,7 +136,7 @@ export default function Grants() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           External Link
-                          <ExternalLink className="ml-2 h-3 w-3" />
+                          <ExternalLink className="ml-2 h-4 w-4" />
                         </a>
                       </Button>
                     )}
@@ -147,8 +147,8 @@ export default function Grants() {
           </div>
         ) : (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-lg font-medium text-muted-foreground">
+            <CardContent className="py-16 text-center">
+              <p className="text-xl font-semibold text-muted-foreground">
                 {searchQuery ? 'No grants found matching your search' : 'No grants available'}
               </p>
             </CardContent>
