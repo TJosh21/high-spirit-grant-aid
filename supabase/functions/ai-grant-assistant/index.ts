@@ -8,13 +8,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Input validation schema
+// Input validation schemas
 const polishRequestSchema = z.object({
   type: z.literal('polish'),
   question_text: z.string().min(1, 'Question text is required').max(1000, 'Question text must be under 1000 characters'),
   user_rough_answer: z.string().min(1, 'Answer is required').max(5000, 'Answer must be under 5000 characters'),
   user_clarification: z.string().max(2000, 'Clarification must be under 2000 characters').optional(),
   word_limit: z.number().int().min(1).max(5000).optional(),
+});
+
+const suggestRequestSchema = z.object({
+  type: z.literal('suggest'),
+  question_text: z.string().min(1, 'Question text is required').max(1000, 'Question text must be under 1000 characters'),
+  user_rough_answer: z.string().min(1, 'Answer is required').max(5000, 'Answer must be under 5000 characters'),
+  word_limit: z.number().int().min(1).max(5000).optional(),
+  current_word_count: z.number().int().min(0),
 });
 
 // Rate limiting configuration
@@ -143,7 +151,119 @@ serve(async (req) => {
       );
     }
 
-    // Validate input with Zod
+    // Handle different request types
+    const requestType = body.type;
+    
+    if (requestType === 'suggest') {
+      const validationResult = suggestRequestSchema.safeParse(body);
+      
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message
+        }));
+        
+        return new Response(
+          JSON.stringify({ error: 'Validation failed', details: errors }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { question_text, user_rough_answer, word_limit, current_word_count } = validationResult.data;
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+
+      if (!LOVABLE_API_KEY) {
+        throw new Error('LOVABLE_API_KEY not configured');
+      }
+
+      const systemPrompt = `You are an expert grant writing consultant. Analyze the user's answer and provide 3-5 specific, actionable suggestions to improve it.
+
+Focus on:
+1. Content gaps or areas that need more detail
+2. Word count optimization (current: ${current_word_count}${word_limit ? `, limit: ${word_limit}` : ''})
+3. Clarity and persuasiveness
+4. Alignment with the grant question
+5. Professional tone and structure
+
+Provide each suggestion as a clear, concise sentence.`;
+
+      const userPrompt = `Grant Question: ${question_text}
+
+Current Answer: ${user_rough_answer}
+
+Provide 3-5 specific suggestions to improve this answer.`;
+
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          tools: [{
+            type: 'function',
+            function: {
+              name: 'provide_suggestions',
+              description: 'Provide improvement suggestions for the grant answer',
+              parameters: {
+                type: 'object',
+                properties: {
+                  suggestions: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'List of 3-5 specific, actionable suggestions',
+                    minItems: 3,
+                    maxItems: 5
+                  }
+                },
+                required: ['suggestions']
+              }
+            }
+          }],
+          tool_choice: { type: 'function', function: { name: 'provide_suggestions' } }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('AI API error:', response.status, errorText);
+        throw new Error(`AI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const toolCall = data.choices[0]?.message?.tool_calls?.[0];
+      const suggestions = toolCall?.function?.arguments ? 
+        JSON.parse(toolCall.function.arguments).suggestions : [];
+
+      const responseSize = JSON.stringify(suggestions).length;
+      await logUsage(supabase, user.id, requestSize, responseSize);
+
+      return new Response(
+        JSON.stringify({ 
+          suggestions,
+          rate_limit: {
+            remaining: rateLimit.remaining - 1,
+            limit: MAX_REQUESTS_PER_WINDOW,
+            windowMinutes: RATE_LIMIT_WINDOW_MINUTES
+          }
+        }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'X-RateLimit-Limit': MAX_REQUESTS_PER_WINDOW.toString(),
+            'X-RateLimit-Remaining': (rateLimit.remaining - 1).toString(),
+          } 
+        }
+      );
+    }
+
+    // Handle polish request
     const validationResult = polishRequestSchema.safeParse(body);
     
     if (!validationResult.success) {
