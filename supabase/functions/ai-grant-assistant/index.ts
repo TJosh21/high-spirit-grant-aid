@@ -97,6 +97,19 @@ serve(async (req) => {
     const rateLimit = await checkRateLimit(supabase, user.id);
     
     if (!rateLimit.allowed) {
+      // Trigger alert for rate limit hit (fire and forget)
+      supabase.functions.invoke('send-admin-alert', {
+        body: {
+          alert_type: 'rate_limit',
+          message: `User has exceeded rate limit: ${MAX_REQUESTS_PER_WINDOW} requests per ${RATE_LIMIT_WINDOW_MINUTES} minutes.`,
+          user_id: user.id,
+          metadata: {
+            rate_limit: MAX_REQUESTS_PER_WINDOW,
+            window_minutes: RATE_LIMIT_WINDOW_MINUTES,
+          },
+        },
+      }).catch(err => console.error('Failed to send rate limit alert:', err));
+
       return new Response(
         JSON.stringify({ 
           error: `Rate limit exceeded. You can make ${MAX_REQUESTS_PER_WINDOW} requests per ${RATE_LIMIT_WINDOW_MINUTES} minutes. Please try again later.`,

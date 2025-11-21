@@ -1,1 +1,4 @@
 project_id = "gosszudhblnahkxlcuqq"
+
+[functions.monitor-usage-patterns]
+verify_jwt = false

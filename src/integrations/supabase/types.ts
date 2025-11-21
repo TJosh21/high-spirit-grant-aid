@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          alert_emails: string[]
+          created_at: string
+          id: string
+          rate_limit_threshold: number
+          unusual_pattern_threshold: number
+          updated_at: string
+        }
+        Insert: {
+          alert_emails?: string[]
+          created_at?: string
+          id?: string
+          rate_limit_threshold?: number
+          unusual_pattern_threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          alert_emails?: string[]
+          created_at?: string
+          id?: string
+          rate_limit_threshold?: number
+          unusual_pattern_threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_usage_logs: {
         Row: {
           created_at: string
@@ -48,6 +75,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alert_logs: {
+        Row: {
+          alert_message: string
+          alert_type: string
+          id: string
+          metadata: Json | null
+          sent_at: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_message: string
+          alert_type: string
+          id?: string
+          metadata?: Json | null
+          sent_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_message?: string
+          alert_type?: string
+          id?: string
+          metadata?: Json | null
+          sent_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       answers: {
         Row: {
