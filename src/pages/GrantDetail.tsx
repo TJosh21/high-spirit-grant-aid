@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ExternalLink, ArrowLeft, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
+import { ExternalLink, ArrowLeft, CheckCircle2, Circle, AlertCircle, FileText } from 'lucide-react';
+import { ApplicationProgress } from '@/components/ApplicationProgress';
 
 export default function GrantDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -201,52 +202,96 @@ export default function GrantDetail() {
           </CardContent>
         </Card>
 
-        {/* Application Questions */}
-        <div>
-          <h2 className="mb-4 text-2xl font-bold">Application Questions</h2>
-          
-          {questions.length > 0 ? (
-            <div className="space-y-4">
-              {questions.map((question, index) => (
-                <Link key={question.id} to={`/answer/${grant.slug}/${question.id}`}>
-                  <Card className="transition-shadow hover:shadow-md">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="mb-2 flex items-center space-x-2">
-                            <Badge variant="outline">Question {index + 1}</Badge>
-                            {question.word_limit && (
-                              <Badge variant="secondary">{question.word_limit} words max</Badge>
+        {/* Application Section */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main Content - Questions */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-primary">Application Questions</h2>
+              {questions.length > 0 && (
+                <Badge variant="outline" className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  {questions.length} Questions
+                </Badge>
+              )}
+            </div>
+            
+            {questions.length > 0 ? (
+              <div className="space-y-4">
+                {questions.map((question, index) => (
+                  <Link key={question.id} to={`/answer/${grant.slug}/${question.id}`}>
+                    <Card className="shadow-card hover:shadow-card-hover transition-all border border-border">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="mb-2 flex items-center flex-wrap gap-2">
+                              <Badge variant="outline" className="font-medium">
+                                Question {index + 1}
+                              </Badge>
+                              {question.word_limit && (
+                                <Badge variant="secondary" className="bg-accent/10 text-accent">
+                                  {question.word_limit} words max
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {getStatusText(getAnswerStatus(question.id))}
+                              </span>
+                            </div>
+                            <CardTitle className="text-lg font-semibold text-primary mb-2">
+                              {question.question_text}
+                            </CardTitle>
+                            {question.helper_text && (
+                              <CardDescription className="text-sm">
+                                {question.helper_text}
+                              </CardDescription>
                             )}
                           </div>
-                          <CardTitle className="text-lg">{question.question_text}</CardTitle>
-                          {question.helper_text && (
-                            <CardDescription className="mt-2">
-                              {question.helper_text}
-                            </CardDescription>
-                          )}
+                          <div className="flex-shrink-0">
+                            {getStatusIcon(getAnswerStatus(question.id))}
+                          </div>
                         </div>
-                        <div className="ml-4 flex items-center space-x-2">
-                          {getStatusIcon(getAnswerStatus(question.id))}
-                          <span className="text-sm font-medium">
-                            {getStatusText(getAnswerStatus(question.id))}
-                          </span>
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              ))}
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <Card className="shadow-card">
+                <CardContent className="py-12 text-center">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-20" />
+                  <p className="text-muted-foreground font-medium mb-2">
+                    No questions available yet
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Questions will be added soon for this grant
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Sidebar - Progress Tracker */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              {questions.length > 0 ? (
+                <ApplicationProgress questions={questions} answers={answers} />
+              ) : (
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-primary">Get Started</CardTitle>
+                    <CardDescription>
+                      Complete your application to apply for this grant
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Once questions are available, your progress will be tracked here.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  No questions available for this grant yet
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          </div>
         </div>
       </div>
     </div>

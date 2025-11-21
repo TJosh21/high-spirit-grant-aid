@@ -6,7 +6,7 @@ import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Circle, AlertCircle, FileText } from 'lucide-react';
+import { CheckCircle2, Circle, AlertCircle, FileText, Target, TrendingUp } from 'lucide-react';
 
 export default function MyApplications() {
   const { user } = useAuth();
@@ -95,73 +95,142 @@ export default function MyApplications() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">My Applications</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold text-primary mb-2">My Applications</h1>
+          <p className="text-muted-foreground text-lg">
             Track your progress on grant applications
           </p>
         </div>
 
+        {applications.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Target className="w-4 h-4 text-accent" />
+                  Active Applications
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">{applications.length}</div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  Questions Completed
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  {applications.reduce((sum, app) => sum + app.completedQuestions, 0)}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-accent" />
+                  Avg Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  {Math.round(
+                    applications.reduce((sum, app) => 
+                      sum + (app.totalQuestions > 0 ? (app.completedQuestions / app.totalQuestions) * 100 : 0), 0
+                    ) / applications.length
+                  )}%
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {applications.length > 0 ? (
           <div className="space-y-6">
-            {applications.map((app) => (
-              <Card key={app.grant.id} className="overflow-hidden">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <Link to={`/grants/${app.grant.slug}`}>
-                        <CardTitle className="text-xl hover:text-primary">
-                          {app.grant.name}
-                        </CardTitle>
-                      </Link>
-                      <CardDescription className="mt-1">
-                        {app.grant.short_description}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline" className="ml-4">
-                      {app.completedQuestions} of {app.totalQuestions} complete
-                    </Badge>
-                  </div>
-                  <div className="mt-4">
-                    <Progress 
-                      value={app.totalQuestions > 0 ? (app.completedQuestions / app.totalQuestions) * 100 : 0} 
-                      className="h-2"
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">Questions:</p>
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {app.answers.map((answer: any) => (
-                        <Link
-                          key={answer.id}
-                          to={`/answer/${app.grant.slug}/${answer.question_id}`}
-                          className="flex items-center space-x-2 rounded-lg border border-border p-3 transition-colors hover:bg-secondary"
-                        >
-                          {getStatusIcon(answer.status)}
-                          <span className="line-clamp-1 flex-1 text-sm">
-                            {answer.question_text_snapshot}
-                          </span>
+            {applications.map((app) => {
+              const progress = app.totalQuestions > 0 ? (app.completedQuestions / app.totalQuestions) * 100 : 0;
+              
+              return (
+                <Card key={app.grant.id} className="shadow-card hover:shadow-card-hover transition-all">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <Link to={`/grants/${app.grant.slug}`}>
+                          <CardTitle className="text-2xl hover:text-primary transition-colors mb-2">
+                            {app.grant.name}
+                          </CardTitle>
                         </Link>
-                      ))}
+                        <CardDescription className="text-base">
+                          {app.grant.short_description}
+                        </CardDescription>
+                        {app.grant.amount_min && app.grant.amount_max && (
+                          <p className="text-accent font-semibold mt-2">
+                            ${app.grant.amount_min.toLocaleString()} - ${app.grant.amount_max.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      <Badge 
+                        variant={progress === 100 ? "default" : "outline"} 
+                        className={`${progress === 100 ? 'bg-green-600' : ''} gap-2 px-3 py-1`}
+                      >
+                        {app.completedQuestions} of {app.totalQuestions}
+                      </Badge>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-muted-foreground">Progress</span>
+                        <span className="text-sm font-bold text-primary">{Math.round(progress)}%</span>
+                      </div>
+                      <Progress 
+                        value={progress} 
+                        className="h-3"
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-primary">Application Questions:</p>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {app.answers.map((answer: any, index: number) => (
+                          <Link
+                            key={answer.id}
+                            to={`/answer/${app.grant.slug}/${answer.question_id}`}
+                            className="flex items-start gap-3 rounded-xl border border-border p-4 transition-all hover:bg-secondary hover:shadow-card"
+                          >
+                            <div className="flex-shrink-0 mt-0.5">
+                              {getStatusIcon(answer.status)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-muted-foreground mb-1">Question {index + 1}</p>
+                              <p className="line-clamp-2 text-sm font-medium text-foreground">
+                                {answer.question_text_snapshot}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="mb-2 text-lg font-medium">No applications started yet</p>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Browse available grants and start your first application
+          <Card className="shadow-card">
+            <CardContent className="py-16 text-center">
+              <FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-20" />
+              <p className="mb-2 text-xl font-bold text-primary">No applications started yet</p>
+              <p className="mb-6 text-muted-foreground max-w-md mx-auto">
+                Browse available grants and start your first application to access funding opportunities for your business
               </p>
               <Link to="/grants">
-                <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
+                <button className="rounded-xl bg-primary px-6 py-3 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-card">
                   Browse Grants
                 </button>
               </Link>
