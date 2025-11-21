@@ -1,20 +1,43 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Home, FileText, CheckSquare, FileStack, User, LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Home, FileText, CheckSquare, FileStack, User, LogOut, Menu, X, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Navigation() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const navItems = [
+  useEffect(() => {
+    checkAdminStatus();
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
+  };
+
+  const baseNavItems = [
     { to: '/home', icon: Home, label: 'Home' },
     { to: '/grants', icon: FileText, label: 'Grants' },
     { to: '/my-applications', icon: CheckSquare, label: 'Applications' },
     { to: '/documents', icon: FileStack, label: 'Documents' },
     { to: '/profile', icon: User, label: 'Profile' },
   ];
+
+  const navItems = isAdmin 
+    ? [...baseNavItems, { to: '/admin', icon: Shield, label: 'Admin' }]
+    : baseNavItems;
 
   return (
     <nav className="bg-card border-b border-border shadow-card sticky top-0 z-50">
