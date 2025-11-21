@@ -28,7 +28,8 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/grants" element={<ProtectedRoute><Grants /></ProtectedRoute>} />
             <Route path="/grants/:slug" element={<ProtectedRoute><GrantDetail /></ProtectedRoute>} />
             <Route path="/answer/:grantSlug/:questionId" element={<ProtectedRoute><Answer /></ProtectedRoute>} />
