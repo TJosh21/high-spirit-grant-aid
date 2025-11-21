@@ -6,9 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Activity, Users, Zap, AlertTriangle } from 'lucide-react';
+import { Activity, Users, Zap, AlertTriangle, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { Navigation } from '@/components/Navigation';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface UsageLog {
   id: string;
@@ -213,8 +215,18 @@ export default function AdminDashboard() {
       
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground text-lg">AI usage analytics and system monitoring</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-primary mb-2">Admin Dashboard</h1>
+              <p className="text-muted-foreground text-lg">AI usage analytics and system monitoring</p>
+            </div>
+            <Link to="/admin/settings">
+              <Button variant="outline" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Settings
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}
