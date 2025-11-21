@@ -8,93 +8,80 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Royal Blue & Gold Design System for High Spirit Grant Assistant */
+    /* Premium Royal Blue & Gold Design System */
     --background: 0 0% 100%;
-    --foreground: 220 26% 14%;
+    --foreground: 0 0% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 26% 14%;
+    --card-foreground: 0 0% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 26% 14%;
+    --popover-foreground: 0 0% 12%;
 
-    /* Royal Blue as primary brand color */
-    --primary: 221 83% 53%;
+    /* Royal Blue #0A2A6A - main action color */
+    --primary: 221 83% 23%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 221 83% 65%;
-    --primary-dark: 221 83% 43%;
+    --primary-hover: 221 83% 20%;
 
-    /* Gold as accent color */
-    --accent: 45 93% 47%;
-    --accent-foreground: 220 26% 14%;
-    --accent-light: 45 93% 57%;
-    --accent-dark: 45 93% 37%;
+    /* Gold #D4AF37 - accents and highlights */
+    --accent: 45 62% 53%;
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 45 62% 48%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 26% 14%;
+    /* Light Silver #F5F5F7 - subtle backgrounds */
+    --secondary: 240 14% 97%;
+    --secondary-foreground: 0 0% 12%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Slate Gray #6C6F75 - secondary text */
+    --muted: 240 14% 97%;
+    --muted-foreground: 220 5% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 221 83% 53%;
+    /* Soft gray border #E1E1E4 */
+    --border: 240 8% 89%;
+    --input: 240 8% 89%;
+    --ring: 221 83% 23%;
 
     --radius: 0.75rem;
 
-    /* Gradient definitions */
-    --gradient-royal: linear-gradient(135deg, hsl(221 83% 53%), hsl(221 83% 43%));
-    --gradient-gold: linear-gradient(135deg, hsl(45 93% 57%), hsl(45 93% 47%));
-    --gradient-hero: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(221 83% 43%) 50%, hsl(45 93% 47%) 100%);
-    
-    /* Status colors */
-    --status-success: 142 76% 36%;
-    --status-warning: 38 92% 50%;
-    --status-info: 199 89% 48%;
-    
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    --shadow-royal: 0 10px 30px -10px hsl(221 83% 53% / 0.3);
-    --shadow-gold: 0 4px 20px hsl(45 93% 47% / 0.25);
+    /* Premium shadows */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08);
+    --shadow-premium: 0 8px 24px 0 rgb(10 42 106 / 0.12);
   }
 
   .dark {
-    --background: 220 26% 14%;
+    --background: 0 0% 12%;
     --foreground: 0 0% 98%;
 
-    --card: 220 26% 18%;
+    --card: 220 5% 16%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 220 26% 18%;
+    --popover: 220 5% 16%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 221 83% 53%;
+    --primary: 221 83% 28%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 221 83% 65%;
-    --primary-dark: 221 83% 43%;
+    --primary-hover: 221 83% 32%;
 
-    --accent: 45 93% 47%;
-    --accent-foreground: 220 26% 14%;
-    --accent-light: 45 93% 57%;
-    --accent-dark: 45 93% 37%;
+    --accent: 45 62% 53%;
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 45 62% 58%;
 
-    --secondary: 220 26% 22%;
+    --secondary: 220 5% 20%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 26% 22%;
-    --muted-foreground: 220 9% 65%;
+    --muted: 220 5% 20%;
+    --muted-foreground: 220 5% 60%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 26% 28%;
-    --input: 220 26% 28%;
-    --ring: 221 83% 53%;
+    --border: 220 5% 28%;
+    --input: 220 5% 28%;
+    --ring: 221 83% 28%;
   }
 }
 
@@ -104,6 +91,19 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl font-bold text-foreground;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl font-semibold text-foreground;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl font-semibold text-foreground;
   }
 }
