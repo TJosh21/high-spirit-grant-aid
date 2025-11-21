@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Sparkles, Copy, Loader2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -21,6 +23,21 @@ export default function Answer() {
   const [userClarification, setUserClarification] = useState('');
   const [loading, setLoading] = useState(true);
   const [aiProcessing, setAiProcessing] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  const wordCount = useMemo(() => {
+    return userRoughAnswer.trim().split(/\s+/).filter(word => word.length > 0).length;
+  }, [userRoughAnswer]);
+
+  const wordLimitStatus = useMemo(() => {
+    if (!question?.word_limit) return null;
+    const percentage = (wordCount / question.word_limit) * 100;
+    if (percentage > 100) return { type: 'over', message: `${wordCount - question.word_limit} words over limit`, variant: 'destructive' as const };
+    if (percentage > 90) return { type: 'warning', message: `${question.word_limit - wordCount} words remaining`, variant: 'default' as const };
+    if (percentage < 50) return { type: 'under', message: `Consider adding ${Math.floor(question.word_limit * 0.7) - wordCount} more words`, variant: 'default' as const };
+    return { type: 'good', message: `${question.word_limit - wordCount} words remaining`, variant: 'default' as const };
+  }, [wordCount, question?.word_limit]);
 
   useEffect(() => {
     if (grantSlug && questionId) {
@@ -99,6 +116,46 @@ export default function Answer() {
     }
   };
 
+  const getSuggestions = async () => {
+    if (!userRoughAnswer.trim()) {
+      toast({
+        title: 'Answer required',
+        description: 'Please write something first to get suggestions',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-grant-assistant', {
+        body: {
+          type: 'suggest',
+          question_text: question.question_text,
+          user_rough_answer: userRoughAnswer,
+          word_limit: question.word_limit,
+          current_word_count: wordCount,
+        },
+      });
+
+      if (error) throw error;
+
+      setSuggestions(data.suggestions || []);
+      toast({
+        title: 'Suggestions ready!',
+        description: 'Review the AI suggestions below',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error getting suggestions',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
   const handlePolish = async () => {
     if (!userRoughAnswer.trim()) {
       toast({
@@ -140,6 +197,7 @@ export default function Answer() {
         description: 'Your professional grant answer is ready',
       });
 
+      setSuggestions([]);
       loadData();
     } catch (error: any) {
       toast({
@@ -210,25 +268,101 @@ export default function Answer() {
               rows={8}
               className="resize-none"
             />
-            <Button
-              onClick={handlePolish}
-              disabled={aiProcessing || !userRoughAnswer.trim()}
-              className="bg-gradient-royal"
-            >
-              {aiProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Polish with AI
-                </>
-              )}
-            </Button>
+            
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                {question?.word_limit && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {wordCount} / {question.word_limit} words
+                      </span>
+                      {wordLimitStatus && (
+                        <span className={wordLimitStatus.type === 'over' ? 'text-destructive' : 'text-muted-foreground'}>
+                          {wordLimitStatus.message}
+                        </span>
+                      )}
+                    </div>
+                    <Progress 
+                      value={Math.min((wordCount / question.word_limit) * 100, 100)} 
+                      className={wordLimitStatus?.type === 'over' ? '[&>div]:bg-destructive' : ''}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {wordLimitStatus?.type === 'over' && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Your answer exceeds the word limit. Consider getting AI suggestions to optimize it.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex gap-2">
+              <Button
+                onClick={getSuggestions}
+                disabled={loadingSuggestions || !userRoughAnswer.trim()}
+                variant="outline"
+              >
+                {loadingSuggestions ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Getting Suggestions...
+                  </>
+                ) : (
+                  <>
+                    <Lightbulb className="mr-2 h-4 w-4" />
+                    Get AI Suggestions
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handlePolish}
+                disabled={aiProcessing || !userRoughAnswer.trim()}
+                className="bg-gradient-royal"
+              >
+                {aiProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Polish with AI
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
+
+        {suggestions.length > 0 && (
+          <Card className="mb-6 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Lightbulb className="mr-2 h-5 w-5 text-primary" />
+                AI Improvement Suggestions
+              </CardTitle>
+              <CardDescription>Consider these enhancements before polishing your answer</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                {suggestions.map((suggestion, index) => (
+                  <li key={index} className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm">{suggestion}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         {answer?.ai_polished_answer && (
           <Card className="border-accent/20 bg-accent/5">
