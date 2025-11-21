@@ -74,7 +74,7 @@ export default function Onboarding() {
         description: "Let's find some grants for you.",
       });
 
-      navigate('/');
+      navigate('/home');
     } catch (error: any) {
       toast({
         title: 'Error',

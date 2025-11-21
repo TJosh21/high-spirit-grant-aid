@@ -20,7 +20,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/home');
     }
   }, [user, navigate]);
 
@@ -38,7 +38,7 @@ export default function Auth() {
             variant: 'destructive',
           });
         } else {
-          navigate('/');
+          navigate('/home');
         }
       } else {
         if (!name.trim()) {
