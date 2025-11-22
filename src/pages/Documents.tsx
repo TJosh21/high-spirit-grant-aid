@@ -4,39 +4,40 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Copy, FileText, Loader2 } from 'lucide-react';
+import { Upload, Download, Trash2, FileText, Loader2, FolderOpen } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const documentTypes = [
-  {
-    type: 'business_plan',
-    title: 'Business Plan',
-    description: 'Comprehensive overview of your business strategy and operations',
-  },
-  {
-    type: 'executive_summary',
-    title: 'Executive Summary',
-    description: 'Concise summary of your business for quick review',
-  },
-  {
-    type: 'capability_statement',
-    title: 'Capability Statement',
-    description: 'One-page document showcasing your business capabilities',
-  },
-  {
-    type: 'elevator_pitch',
-    title: 'Elevator Pitch',
-    description: '30-second compelling description of your business',
-  },
+type Document = {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  file_type: string;
+  category: string | null;
+  created_at: string;
+};
+
+const documentCategories = [
+  'Business Plan',
+  'Financial Statement',
+  'Certificate',
+  'Legal Document',
+  'Tax Document',
+  'Proposal',
+  'Other',
 ];
 
 export default function Documents() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Other');
 
   useEffect(() => {
     if (user) {
@@ -47,9 +48,10 @@ export default function Documents() {
   const loadDocuments = async () => {
     try {
       const { data } = await supabase
-        .from('business_documents')
+        .from('documents')
         .select('*')
-        .eq('user_id', user?.id);
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
 
       setDocuments(data || []);
     } catch (error) {
@@ -59,58 +61,126 @@ export default function Documents() {
     }
   };
 
-  const generateDocument = async (docType: string, title: string) => {
-    setGenerating(docType);
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+
     try {
-      // Get user profile for context
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user?.id}/${Date.now()}-${file.name}`;
 
-      // For now, create a placeholder - in production this would call AI
-      const placeholder = `[AI-Generated ${title}]\n\nBusiness: ${profile?.business_name || 'Your Business'}\nIndustry: ${profile?.business_industry || 'Your Industry'}\n\nThis document will be generated using AI based on your business profile and grant answers. The AI will create a professional, comprehensive ${title.toLowerCase()} tailored to your specific business needs.`;
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(fileName, file);
 
-      const { error } = await supabase
-        .from('business_documents')
-        .upsert([{
-          user_id: user?.id!,
-          doc_type: docType as any,
-          title,
-          ai_generated_content: placeholder,
-          last_updated_at: new Date().toISOString(),
-        }], { onConflict: 'user_id,doc_type' });
+        if (uploadError) throw uploadError;
 
-      if (error) throw error;
+        // Create document record
+        const { error: dbError } = await supabase
+          .from('documents')
+          .insert({
+            user_id: user?.id!,
+            file_name: file.name,
+            file_path: fileName,
+            file_size: file.size,
+            file_type: file.type,
+            category: selectedCategory,
+          });
+
+        if (dbError) throw dbError;
+      }
 
       toast({
-        title: 'Document generated!',
-        description: `Your ${title.toLowerCase()} is ready`,
+        title: 'Upload successful!',
+        description: `${files.length} file(s) uploaded successfully.`,
       });
 
       loadDocuments();
     } catch (error: any) {
       toast({
-        title: 'Error generating document',
+        title: 'Upload failed',
         description: error.message,
         variant: 'destructive',
       });
     } finally {
-      setGenerating(null);
+      setUploading(false);
+      event.target.value = '';
     }
   };
 
-  const copyToClipboard = (text: string, title: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: 'Copied!',
-      description: `${title} copied to clipboard`,
-    });
+  const downloadDocument = async (doc: Document) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(doc.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast({
+        title: 'Download failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const getDocument = (docType: string) => {
-    return documents.find((d) => d.doc_type === docType);
+  const deleteDocument = async (doc: Document) => {
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([doc.file_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', doc.id);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: 'Document deleted',
+        description: `${doc.file_name} has been removed.`,
+      });
+
+      loadDocuments();
+    } catch (error: any) {
+      toast({
+        title: 'Delete failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.includes('pdf')) return '📄';
+    if (fileType.includes('image')) return '🖼️';
+    if (fileType.includes('word') || fileType.includes('document')) return '📝';
+    if (fileType.includes('sheet') || fileType.includes('excel')) return '📊';
+    return '📎';
   };
 
   if (loading) {
@@ -127,90 +197,123 @@ export default function Documents() {
       
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Business Documents</h1>
+          <h1 className="mb-2 text-3xl font-bold">Document Management</h1>
           <p className="text-muted-foreground">
-            AI-generated professional documents for your business
+            Store and organize your business documents, certificates, and files
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {documentTypes.map((docType) => {
-            const doc = getDocument(docType.type);
-            const isGenerating = generating === docType.type;
-
-            return (
-              <Card key={docType.type}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle>{docType.title}</CardTitle>
-                      <CardDescription>{docType.description}</CardDescription>
-                    </div>
-                    <FileText className="h-6 w-6 text-muted-foreground" />
+        {/* Upload Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Upload className="mr-2 h-5 w-5" />
+              Upload Documents
+            </CardTitle>
+            <CardDescription>Upload files to your secure document storage</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="category">Document Category</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger id="category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {documentCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="file-upload" className="cursor-pointer">
+                <div className="flex h-32 w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 transition-colors hover:border-primary">
+                  <div className="text-center">
+                    <Upload className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, DOC, DOCX, XLS, XLSX, images
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {doc ? (
-                    <>
-                      <Textarea
-                        value={doc.ai_generated_content || ''}
-                        readOnly
-                        rows={8}
-                        className="resize-none bg-muted/50"
-                      />
-                      <div className="flex space-x-2">
-                        <Button
-                          onClick={() => copyToClipboard(doc.ai_generated_content, docType.title)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Copy
-                        </Button>
-                        <Button
-                          onClick={() => generateDocument(docType.type, docType.title)}
-                          variant="outline"
-                          size="sm"
-                          disabled={isGenerating}
-                        >
-                          {isGenerating ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Regenerating...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="mr-2 h-4 w-4" />
-                              Regenerate
-                            </>
-                          )}
-                        </Button>
+                </div>
+              </Label>
+              <Input
+                id="file-upload"
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </div>
+            {uploading && (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Uploading...
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Documents List */}
+        {documents.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <FolderOpen className="mb-4 h-16 w-16 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold">No documents yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Upload your first document to get started
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
+            {documents.map((doc) => (
+              <Card key={doc.id}>
+                <CardContent className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl">{getFileIcon(doc.file_type)}</div>
+                    <div>
+                      <p className="font-medium">{doc.file_name}</p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{formatFileSize(doc.file_size)}</span>
+                        <span>•</span>
+                        <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+                        {doc.category && (
+                          <>
+                            <span>•</span>
+                            <Badge variant="outline">{doc.category}</Badge>
+                          </>
+                        )}
                       </div>
-                    </>
-                  ) : (
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
                     <Button
-                      onClick={() => generateDocument(docType.type, docType.title)}
-                      className="w-full bg-gradient-royal"
-                      disabled={isGenerating}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadDocument(doc)}
                     >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="mr-2 h-4 w-4" />
-                          Generate with AI
-                        </>
-                      )}
+                      <Download className="h-4 w-4" />
                     </Button>
-                  )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteDocument(doc)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
