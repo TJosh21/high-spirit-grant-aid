@@ -252,6 +252,50 @@ export type Database = {
           },
         ]
       }
+      answer_versions: {
+        Row: {
+          ai_polished_answer: string | null
+          answer_id: string
+          created_at: string | null
+          id: string
+          status: string | null
+          user_clarification: string | null
+          user_id: string
+          user_rough_answer: string | null
+          version_number: number
+        }
+        Insert: {
+          ai_polished_answer?: string | null
+          answer_id: string
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_clarification?: string | null
+          user_id: string
+          user_rough_answer?: string | null
+          version_number: number
+        }
+        Update: {
+          ai_polished_answer?: string | null
+          answer_id?: string
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_clarification?: string | null
+          user_id?: string
+          user_rough_answer?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_versions_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       answers: {
         Row: {
           ai_clarification: string | null
@@ -395,6 +439,44 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grant_match_scores: {
+        Row: {
+          created_at: string | null
+          grant_id: string
+          id: string
+          match_reasons: Json | null
+          match_score: number
+          notified: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          grant_id: string
+          id?: string
+          match_reasons?: Json | null
+          match_score: number
+          notified?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          grant_id?: string
+          id?: string
+          match_reasons?: Json | null
+          match_score?: number
+          notified?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grant_match_scores_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
             referencedColumns: ["id"]
           },
         ]
@@ -690,6 +772,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tasks: {
+        Row: {
+          answer_id: string
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          answer_id: string
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          answer_id?: string
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

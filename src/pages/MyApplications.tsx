@@ -7,16 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle2, Circle, AlertCircle, FileText, Target, TrendingUp } from 'lucide-react';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { EmptyState } from '@/components/EmptyState';
 import { ApplicationProgress } from '@/components/ApplicationProgress';
+import { BulkOperations } from '@/components/BulkOperations';
 
 export default function MyApplications() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedApps, setSelectedApps] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -96,6 +99,12 @@ export default function MyApplications() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
+      <BulkOperations
+        selectedApplications={selectedApps}
+        onClearSelection={() => setSelectedApps([])}
+        onRefresh={loadApplications}
+      />
+      
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">My Applications</h1>
@@ -156,16 +165,37 @@ export default function MyApplications() {
           <div className="space-y-6">
             {applications.map((app) => {
               const answeredQuestions = app.answers.filter((a: any) => a.status !== 'not_started').length;
+              const isSelected = selectedApps.some(selected => selected.grant_id === app.grant.id);
               
               return (
                 <div key={app.grant.id} className="space-y-4">
-                  <ApplicationProgress
-                    grantName={app.grant.name}
-                    totalQuestions={app.totalQuestions}
-                    answeredQuestions={answeredQuestions}
-                    readyQuestions={app.completedQuestions}
-                    deadline={app.grant.deadline}
-                  />
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedApps([...selectedApps, {
+                            id: app.grant.id,
+                            grant_id: app.grant.id,
+                            status: app.answers[0]?.status || 'not_started',
+                            grants: app.grant
+                          }]);
+                        } else {
+                          setSelectedApps(selectedApps.filter(s => s.grant_id !== app.grant.id));
+                        }
+                      }}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <ApplicationProgress
+                        grantName={app.grant.name}
+                        totalQuestions={app.totalQuestions}
+                        answeredQuestions={answeredQuestions}
+                        readyQuestions={app.completedQuestions}
+                        deadline={app.grant.deadline}
+                      />
+                    </div>
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {app.answers.map((answer: any, index: number) => (
                       <Link

@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save, MessageSquare, Clock } from 'lucide-react';
+import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save, MessageSquare, Clock, CheckSquare, History } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ApplicationTimeline } from '@/components/ApplicationTimeline';
 import { AnswerComments } from '@/components/AnswerComments';
+import { TaskManager } from '@/components/TaskManager';
+import { VersionHistory } from '@/components/VersionHistory';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -344,7 +346,7 @@ export default function Answer() {
         </Card>
 
         <Tabs defaultValue="answer" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="answer">Answer</TabsTrigger>
             <TabsTrigger value="timeline">
               <Clock className="mr-2 h-4 w-4" />
@@ -353,6 +355,14 @@ export default function Answer() {
             <TabsTrigger value="comments">
               <MessageSquare className="mr-2 h-4 w-4" />
               Comments
+            </TabsTrigger>
+            <TabsTrigger value="tasks">
+              <CheckSquare className="mr-2 h-4 w-4" />
+              Tasks
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="mr-2 h-4 w-4" />
+              History
             </TabsTrigger>
           </TabsList>
 
@@ -519,6 +529,19 @@ export default function Answer() {
 
           <TabsContent value="comments">
             {answer && <AnswerComments answerId={answer.id} />}
+          </TabsContent>
+
+          <TabsContent value="tasks">
+            {answer && <TaskManager answerId={answer.id} />}
+          </TabsContent>
+
+          <TabsContent value="history">
+            {answer && (
+              <VersionHistory
+                answerId={answer.id}
+                onRestore={() => loadData()}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
