@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { DollarSign, Calendar, Building2, MapPin, Filter, X, Save, Trash2 } from "lucide-react";
+import { DollarSign, Calendar, Building2, MapPin, Filter, X, Save, Trash2, GitCompare, Check } from "lucide-react";
 import { format, isWithinInterval, addDays } from "date-fns";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { EmptyState } from "@/components/EmptyState";
@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
 import { Navigation } from "@/components/Navigation";
+import { GrantComparison } from "@/components/GrantComparison";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface FilterPreset {
   name: string;
@@ -40,6 +42,8 @@ export default function Grants() {
     return saved ? JSON.parse(saved) : [];
   });
   const [presetName, setPresetName] = useState("");
+  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   const { data: grants, isLoading } = useQuery({
     queryKey: ['grants'],
@@ -175,6 +179,18 @@ export default function Grants() {
     selectedIndustries.length > 0
   ].filter(Boolean).length;
 
+  const toggleGrantSelection = (grantId: string) => {
+    setSelectedForComparison(prev => 
+      prev.includes(grantId) 
+        ? prev.filter(id => id !== grantId)
+        : prev.length < 3 
+          ? [...prev, grantId]
+          : prev
+    );
+  };
+
+  const selectedGrants = filteredGrants.filter(g => selectedForComparison.includes(g.id));
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-background pb-20 md:pb-0">
@@ -201,6 +217,17 @@ export default function Grants() {
                 className="w-full"
               />
             </div>
+
+            {selectedForComparison.length > 0 && (
+              <Button 
+                onClick={() => setShowComparison(true)}
+                variant="default"
+                className="gap-2"
+              >
+                <GitCompare className="h-4 w-4" />
+                Compare ({selectedForComparison.length})
+              </Button>
+            )}
             
             <Sheet>
               <SheetTrigger asChild>
@@ -385,10 +412,27 @@ export default function Grants() {
             />
           ) : (
             <ScrollReveal>
+              <div className="mb-4 text-sm text-muted-foreground">
+                Select up to 3 grants to compare side-by-side
+              </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredGrants.map((grant) => (
-                  <Card key={grant.id} className="hover:shadow-premium transition-all">
+                  <Card key={grant.id} className={`hover:shadow-premium transition-all ${selectedForComparison.includes(grant.id) ? 'ring-2 ring-primary' : ''}`}>
                     <CardHeader>
+                      <div className="flex items-center justify-between mb-2">
+                        <Checkbox
+                          checked={selectedForComparison.includes(grant.id)}
+                          onCheckedChange={() => toggleGrantSelection(grant.id)}
+                          disabled={!selectedForComparison.includes(grant.id) && selectedForComparison.length >= 3}
+                          className="mr-2"
+                        />
+                        {selectedForComparison.includes(grant.id) && (
+                          <Badge variant="default" className="ml-auto">
+                            <Check className="h-3 w-3 mr-1" />
+                            Selected
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-start justify-between mb-2">
                         <Badge variant="outline">
                           {grant.sponsor_type || 'Grant'}
@@ -435,6 +479,12 @@ export default function Grants() {
             </ScrollReveal>
           )}
         </div>
+
+        <GrantComparison 
+          grants={selectedGrants}
+          onRemove={(grantId) => setSelectedForComparison(prev => prev.filter(id => id !== grantId))}
+          onClose={() => setShowComparison(false)}
+        />
       </div>
     </PageTransition>
   );
