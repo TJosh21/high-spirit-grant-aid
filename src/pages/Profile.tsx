@@ -99,23 +99,23 @@ export default function Profile() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto max-w-3xl px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Profile Settings</h1>
-          <p className="text-muted-foreground">
+          <h1 className="mb-2 text-2xl md:text-3xl font-bold text-primary">Profile Settings</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Manage your account and business information
           </p>
         </div>
 
-        <Card>
+        <Card className="shadow-card">
           <CardHeader>
-            <div className="flex items-center space-x-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-royal">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
                 <User className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <CardTitle>Business Profile</CardTitle>
-                <CardDescription>Update your business information</CardDescription>
+                <CardTitle className="text-lg md:text-xl">Business Profile</CardTitle>
+                <CardDescription className="text-sm md:text-base">Update your business details for better grant matching</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -257,12 +257,13 @@ export default function Profile() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="w-full bg-gradient-royal"
+              size="lg"
+              className="w-full"
             >
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Saving changes...
                 </>
               ) : (
                 'Save Changes'

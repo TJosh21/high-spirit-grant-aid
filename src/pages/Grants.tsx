@@ -53,11 +53,11 @@ export default function Grants() {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
-        <div className="mb-8 border-b-2 border-accent pb-6">
-          <h1 className="mb-2 text-4xl font-bold text-primary">Available Grants</h1>
-          <p className="text-lg text-muted-foreground">
-            Discover funding opportunities for your business
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div className="mb-8">
+          <h1 className="mb-3 text-3xl md:text-4xl font-bold text-primary">Available Grants</h1>
+          <p className="text-base md:text-lg text-muted-foreground">
+            Discover funding opportunities tailored for your business
           </p>
         </div>
 
@@ -87,59 +87,46 @@ export default function Grants() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredGrants.map((grant) => (
               <Link key={grant.id} to={`/grants/${grant.slug}`}>
-                <Card className="h-full transition-all hover:shadow-premium">
-                  <CardHeader>
-                    <div className="mb-4 flex flex-wrap gap-2">
+                <Card className="h-full transition-all hover:shadow-premium border-border shadow-card">
+                  <CardHeader className="pb-4">
+                    <div className="mb-3 flex flex-wrap gap-2">
                       {grant.target_audience_tags?.slice(0, 2).map((tag: string) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
                       ))}
                       {grant.status === 'open' && (
-                        <Badge variant="gold" className="text-xs">Open</Badge>
+                        <Badge variant="gold" className="text-xs font-semibold">Open Now</Badge>
                       )}
                     </div>
-                    <CardTitle className="line-clamp-2 text-xl">{grant.name}</CardTitle>
-                    <CardDescription className="line-clamp-3 text-base">
+                    <CardTitle className="line-clamp-2 text-lg md:text-xl mb-2">{grant.name}</CardTitle>
+                    <CardDescription className="line-clamp-2 text-sm md:text-base">
                       {grant.short_description}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-3 text-base">
-                      <div className="flex items-center justify-between">
+                    <div className="space-y-2 text-sm md:text-base">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold text-accent">
+                        <span className="font-bold text-accent text-right">
                           {grant.amount_min && grant.amount_max
                             ? `$${grant.amount_min.toLocaleString()} - $${grant.amount_max.toLocaleString()}`
                             : 'Varies'}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="text-muted-foreground">Sponsor:</span>
-                        <span className="font-medium">{grant.sponsor_name}</span>
+                        <span className="font-medium text-right">{grant.sponsor_name}</span>
                       </div>
                       {grant.deadline && (
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <span className="text-muted-foreground">Deadline:</span>
-                          <span className="font-medium">
+                          <span className="font-medium text-right">
                             {new Date(grant.deadline).toLocaleDateString()}
                           </span>
                         </div>
                       )}
                     </div>
-                    {grant.application_link && (
-                      <Button variant="outline" size="sm" className="w-full" asChild>
-                        <a
-                          href={grant.application_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          External Link
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
                   </CardContent>
                 </Card>
               </Link>

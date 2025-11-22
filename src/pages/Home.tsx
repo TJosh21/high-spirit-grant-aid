@@ -79,52 +79,52 @@ export default function Home() {
       <Navigation />
       
       {/* Hero Section */}
-      <div className="bg-primary py-16 md:py-20">
+      <div className="bg-gradient-to-br from-primary via-primary-hover to-primary py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <h1 className="mb-4 text-4xl md:text-5xl font-bold text-primary-foreground">
-              Welcome back, {profile?.name || 'there'}!
+            <h1 className="mb-3 text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground">
+              Welcome back, {profile?.name?.split(' ')[0] || 'there'}! 👋
             </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/90">
-              Your AI-powered assistant for discovering and applying to grants
+            <p className="text-base md:text-lg text-primary-foreground/90">
+              Your AI-powered grant assistant is ready to help you secure funding for your business
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         {/* Stats Cards */}
-        <div className="mb-10 grid gap-6 md:grid-cols-3">
-          <Card className="border-l-4 border-l-primary">
+        <div className="mb-10 grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Card className="border-l-4 border-l-primary shadow-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
                 Applications Started
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-primary">{stats.total}</div>
+              <div className="text-3xl md:text-4xl font-bold text-primary">{stats.total}</div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-accent">
+          <Card className="border-l-4 border-l-accent shadow-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Answers Ready
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Ready to Submit
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-accent">{stats.ready}</div>
+              <div className="text-3xl md:text-4xl font-bold text-accent">{stats.ready}</div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-accent">
+          <Card className="border-l-4 border-l-primary shadow-card sm:col-span-2 lg:col-span-1">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Completion Rate
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Success Rate
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-primary">
+              <div className="text-3xl md:text-4xl font-bold text-primary">
                 {stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0}%
               </div>
             </CardContent>
@@ -133,47 +133,47 @@ export default function Home() {
 
         {/* Recommended Grants */}
         <div className="mb-10">
-          <div className="mb-6 flex items-center justify-between border-b-2 border-accent pb-4">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b-2 border-accent">
             <div>
-              <h2 className="text-3xl font-semibold text-primary">Recommended Grants</h2>
-              <p className="text-base text-muted-foreground mt-1">Based on your business profile</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-primary mb-1">Recommended For You</h2>
+              <p className="text-sm md:text-base text-muted-foreground">Funding opportunities matching your business profile</p>
             </div>
-            <Link to="/grants">
-              <Button variant="outline" size="lg">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4" />
+            <Link to="/grants" className="self-start sm:self-auto">
+              <Button variant="outline" size="lg" className="gap-2">
+                View All Grants
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
 
           {recommendedGrants.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {recommendedGrants.map((grant) => (
                 <Link key={grant.id} to={`/grants/${grant.slug}`}>
-                  <Card className="h-full transition-all hover:shadow-premium">
-                    <CardHeader>
-                      <div className="mb-3 flex items-start justify-between">
-                        <Sparkles className="h-6 w-6 text-accent" />
-                        <Badge variant="gold">{grant.sponsor_type || 'Grant'}</Badge>
+                  <Card className="h-full transition-all hover:shadow-premium shadow-card">
+                    <CardHeader className="pb-4">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <Sparkles className="h-5 w-5 text-accent flex-shrink-0 mt-1" />
+                        <Badge variant="gold" className="text-xs">{grant.sponsor_type || 'Grant'}</Badge>
                       </div>
-                      <CardTitle className="text-xl">{grant.name}</CardTitle>
-                      <CardDescription className="line-clamp-2 text-base">
+                      <CardTitle className="text-lg md:text-xl line-clamp-2 mb-2">{grant.name}</CardTitle>
+                      <CardDescription className="line-clamp-2 text-sm md:text-base">
                         {grant.short_description}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-3 text-base">
-                        <div className="flex items-center justify-between">
+                      <div className="space-y-2 text-sm md:text-base">
+                        <div className="flex items-center justify-between gap-2">
                           <span className="text-muted-foreground">Amount:</span>
-                          <span className="font-semibold text-accent">
+                          <span className="font-bold text-accent text-right">
                             {grant.amount_min && grant.amount_max
                               ? `$${grant.amount_min.toLocaleString()} - $${grant.amount_max.toLocaleString()}`
                               : 'Varies'}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <span className="text-muted-foreground">Sponsor:</span>
-                          <span className="font-medium">{grant.sponsor_name}</span>
+                          <span className="font-medium text-right line-clamp-1">{grant.sponsor_name}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -195,17 +195,17 @@ export default function Home() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
           <Link to="/grants">
-            <Card className="transition-all hover:shadow-card-hover">
+            <Card className="transition-all hover:shadow-card-hover shadow-card h-full">
               <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                    <TrendingUp className="h-7 w-7 text-primary" />
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-primary/10 flex-shrink-0">
+                    <TrendingUp className="h-6 w-6 md:h-7 md:w-7 text-primary" />
                   </div>
-                  <div>
-                    <CardTitle className="text-xl">Browse All Grants</CardTitle>
-                    <CardDescription className="text-base">Explore available opportunities</CardDescription>
+                  <div className="min-w-0">
+                    <CardTitle className="text-lg md:text-xl mb-1">Browse All Grants</CardTitle>
+                    <CardDescription className="text-sm md:text-base">Discover new funding opportunities</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -213,15 +213,15 @@ export default function Home() {
           </Link>
 
           <Link to="/my-applications">
-            <Card className="transition-all hover:shadow-card-hover">
+            <Card className="transition-all hover:shadow-card-hover shadow-card h-full">
               <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
-                    <FileText className="h-7 w-7 text-accent" />
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-accent/10 flex-shrink-0">
+                    <FileText className="h-6 w-6 md:h-7 md:w-7 text-accent" />
                   </div>
-                  <div>
-                    <CardTitle className="text-xl">My Applications</CardTitle>
-                    <CardDescription className="text-base">Continue where you left off</CardDescription>
+                  <div className="min-w-0">
+                    <CardTitle className="text-lg md:text-xl mb-1">My Applications</CardTitle>
+                    <CardDescription className="text-sm md:text-base">Continue your submissions</CardDescription>
                   </div>
                 </div>
               </CardHeader>

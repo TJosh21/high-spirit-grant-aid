@@ -49,6 +49,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        status: {
+          success: "hsl(var(--status-success))",
+          warning: "hsl(var(--status-warning))",
+          info: "hsl(var(--status-info))",
+        },
       },
       boxShadow: {
         'card': 'var(--shadow-card)',
