@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Users, UserPlus, Trash2, Building2 } from 'lucide-react';
+import { Users, UserPlus, Trash2, Building2, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ type Member = {
 export default function Team() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,7 +156,7 @@ export default function Team() {
       // Find user by email
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, name')
         .eq('email', inviteEmail)
         .single();
 
@@ -176,6 +178,31 @@ export default function Team() {
         });
 
       if (error) throw error;
+
+      // Get current user's name for the email
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user?.id)
+        .single();
+
+      // Send email notification
+      try {
+        await supabase.functions.invoke('send-email-notification', {
+          body: {
+            type: 'member_invitation',
+            to: inviteEmail,
+            data: {
+              organizationName: organization.name,
+              inviterName: currentProfile?.name || 'A team member',
+              role: inviteRole,
+            },
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send invitation email:', emailError);
+        // Don't fail the invitation if email fails
+      }
 
       toast({
         title: 'Member invited!',
@@ -292,11 +319,17 @@ export default function Team() {
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">{organization.name}</h1>
-          <p className="text-muted-foreground">
-            Manage your team members and collaboration settings
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="mb-2 text-3xl font-bold">{organization.name}</h1>
+            <p className="text-muted-foreground">
+              Manage your team members and collaboration settings
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => navigate('/organization/settings')}>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
