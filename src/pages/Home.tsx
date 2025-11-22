@@ -6,7 +6,8 @@ import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, TrendingUp, FileText, ArrowRight } from 'lucide-react';
+import { Sparkles, TrendingUp, FileText, ArrowRight, Target } from 'lucide-react';
+import { getTopRecommendedGrants } from '@/utils/grantMatching';
 
 export default function Home() {
   const { user } = useAuth();
@@ -51,14 +52,16 @@ export default function Home() {
         });
       }
 
-      // Load recommended grants (simplified - just show open grants)
+      // Load all open grants and calculate match scores
       const { data: grants } = await supabase
         .from('grants')
         .select('*')
-        .eq('status', 'open')
-        .limit(3);
+        .eq('status', 'open');
 
-      setRecommendedGrants(grants || []);
+      if (grants && profileData) {
+        const recommended = getTopRecommendedGrants(grants, profileData, 3);
+        setRecommendedGrants(recommended);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -148,32 +151,46 @@ export default function Home() {
 
           {recommendedGrants.length > 0 ? (
             <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {recommendedGrants.map((grant) => (
-                <Link key={grant.id} to={`/grants/${grant.slug}`}>
+              {recommendedGrants.map((matchedGrant) => (
+                <Link key={matchedGrant.grant.id} to={`/grants/${matchedGrant.grant.slug}`}>
                   <Card className="h-full transition-all hover:shadow-premium shadow-card">
                     <CardHeader className="pb-4">
                       <div className="mb-3 flex items-start justify-between gap-2">
-                        <Sparkles className="h-5 w-5 text-accent flex-shrink-0 mt-1" />
-                        <Badge variant="gold" className="text-xs">{grant.sponsor_type || 'Grant'}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Target className="h-5 w-5 text-accent flex-shrink-0" />
+                          <Badge variant="default" className="text-xs font-bold">
+                            {matchedGrant.score}% Match
+                          </Badge>
+                        </div>
+                        <Badge variant="gold" className="text-xs">{matchedGrant.grant.sponsor_type || 'Grant'}</Badge>
                       </div>
-                      <CardTitle className="text-lg md:text-xl line-clamp-2 mb-2">{grant.name}</CardTitle>
+                      <CardTitle className="text-lg md:text-xl line-clamp-2 mb-2">{matchedGrant.grant.name}</CardTitle>
                       <CardDescription className="line-clamp-2 text-sm md:text-base">
-                        {grant.short_description}
+                        {matchedGrant.grant.short_description}
                       </CardDescription>
+                      {matchedGrant.matchReasons.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {matchedGrant.matchReasons.slice(0, 2).map((reason, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {reason}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 text-sm md:text-base">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-muted-foreground">Amount:</span>
                           <span className="font-bold text-accent text-right">
-                            {grant.amount_min && grant.amount_max
-                              ? `$${grant.amount_min.toLocaleString()} - $${grant.amount_max.toLocaleString()}`
+                            {matchedGrant.grant.amount_min && matchedGrant.grant.amount_max
+                              ? `$${matchedGrant.grant.amount_min.toLocaleString()} - $${matchedGrant.grant.amount_max.toLocaleString()}`
                               : 'Varies'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-muted-foreground">Sponsor:</span>
-                          <span className="font-medium text-right line-clamp-1">{grant.sponsor_name}</span>
+                          <span className="font-medium text-right line-clamp-1">{matchedGrant.grant.sponsor_name}</span>
                         </div>
                       </div>
                     </CardContent>
