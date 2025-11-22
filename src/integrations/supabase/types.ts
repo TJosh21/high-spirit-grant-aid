@@ -301,11 +301,14 @@ export type Database = {
           ai_clarification: string | null
           ai_polished_answer: string | null
           created_at: string | null
+          docusign_envelope_id: string | null
+          estimated_completion_minutes: number | null
           grant_id: string
           id: string
           last_ai_run_at: string | null
           last_updated_at: string | null
           organization_id: string | null
+          outcome: string | null
           question_id: string
           question_text_snapshot: string
           status: Database["public"]["Enums"]["answer_status"] | null
@@ -317,11 +320,14 @@ export type Database = {
           ai_clarification?: string | null
           ai_polished_answer?: string | null
           created_at?: string | null
+          docusign_envelope_id?: string | null
+          estimated_completion_minutes?: number | null
           grant_id: string
           id?: string
           last_ai_run_at?: string | null
           last_updated_at?: string | null
           organization_id?: string | null
+          outcome?: string | null
           question_id: string
           question_text_snapshot: string
           status?: Database["public"]["Enums"]["answer_status"] | null
@@ -333,11 +339,14 @@ export type Database = {
           ai_clarification?: string | null
           ai_polished_answer?: string | null
           created_at?: string | null
+          docusign_envelope_id?: string | null
+          estimated_completion_minutes?: number | null
           grant_id?: string
           id?: string
           last_ai_run_at?: string | null
           last_updated_at?: string | null
           organization_id?: string | null
+          outcome?: string | null
           question_id?: string
           question_text_snapshot?: string
           status?: Database["public"]["Enums"]["answer_status"] | null
@@ -699,6 +708,7 @@ export type Database = {
       questions: {
         Row: {
           created_at: string | null
+          estimated_minutes: number | null
           grant_id: string
           helper_text: string | null
           id: string
@@ -710,6 +720,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          estimated_minutes?: number | null
           grant_id: string
           helper_text?: string | null
           id?: string
@@ -721,6 +732,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          estimated_minutes?: number | null
           grant_id?: string
           helper_text?: string | null
           id?: string

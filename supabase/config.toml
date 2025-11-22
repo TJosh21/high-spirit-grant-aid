@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.match-grants-for-users]
 verify_jwt = false
+
+[functions.send-to-docusign]
+verify_jwt = false
+
+[functions.analyze-question-difficulty]
+verify_jwt = false

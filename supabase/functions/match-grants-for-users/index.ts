@@ -43,6 +43,15 @@ serve(async (req) => {
 
     // Calculate match scores for each user
     const matchPromises = (profiles || []).map(async (profile) => {
+      // Get user's historical answers with outcomes
+      const { data: userAnswers } = await supabaseClient
+        .from('answers')
+        .select(`
+          *,
+          grant:grants(*)
+        `)
+        .eq('user_id', profile.id);
+
       let score = 50; // Base score
       const reasons: string[] = [];
 
@@ -76,6 +85,56 @@ serve(async (req) => {
       if (profile.is_minority_owned && grant.target_audience_tags?.includes('minority_owned')) {
         score += 10;
         reasons.push('Target audience: Minority-owned business');
+      }
+
+      // Historical learning bonus
+      if (userAnswers && userAnswers.length > 0) {
+        const successfulAnswers = userAnswers.filter(a => a.outcome === 'successful');
+        
+        if (successfulAnswers.length > 0) {
+          const successfulIndustries = new Set<string>();
+          const successfulAudiences = new Set<string>();
+          
+          successfulAnswers.forEach(answer => {
+            const successfulGrant = answer.grant;
+            if (successfulGrant?.industry_tags) {
+              successfulGrant.industry_tags.forEach((tag: string) => successfulIndustries.add(tag.toLowerCase()));
+            }
+            if (successfulGrant?.target_audience_tags) {
+              successfulGrant.target_audience_tags.forEach((tag: string) => successfulAudiences.add(tag.toLowerCase()));
+            }
+          });
+
+          // Boost score if matches successful patterns
+          if (grant.industry_tags?.some((tag: string) => successfulIndustries.has(tag.toLowerCase()))) {
+            score += 15;
+            reasons.push('Similar to your successful applications');
+          }
+          
+          if (grant.target_audience_tags?.some((tag: string) => successfulAudiences.has(tag.toLowerCase()))) {
+            score += 10;
+            if (!reasons.includes('Similar to your successful applications')) {
+              reasons.push('Matches your success profile');
+            }
+          }
+        }
+
+        // Penalize if similar to rejected applications
+        const rejectedAnswers = userAnswers.filter(a => a.outcome === 'rejected');
+        if (rejectedAnswers.length > 0) {
+          const rejectedIndustries = new Set<string>();
+          
+          rejectedAnswers.forEach(answer => {
+            const rejectedGrant = answer.grant;
+            if (rejectedGrant?.industry_tags) {
+              rejectedGrant.industry_tags.forEach((tag: string) => rejectedIndustries.add(tag.toLowerCase()));
+            }
+          });
+
+          if (grant.industry_tags?.some((tag: string) => rejectedIndustries.has(tag.toLowerCase()))) {
+            score -= 10;
+          }
+        }
       }
 
       score = Math.min(score, 100);

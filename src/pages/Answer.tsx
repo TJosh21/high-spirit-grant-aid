@@ -9,13 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save, MessageSquare, Clock, CheckSquare, History } from 'lucide-react';
+import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save, MessageSquare, Clock, CheckSquare, History, FileSignature, Brain } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ApplicationTimeline } from '@/components/ApplicationTimeline';
 import { AnswerComments } from '@/components/AnswerComments';
 import { TaskManager } from '@/components/TaskManager';
 import { VersionHistory } from '@/components/VersionHistory';
+import { PresenceIndicator } from '@/components/PresenceIndicator';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -33,6 +34,9 @@ export default function Answer() {
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [sendingToDocuSign, setSendingToDocuSign] = useState(false);
+  const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
+  const [difficulty, setDifficulty] = useState<string | null>(null);
 
   const wordCount = useMemo(() => {
     return userRoughAnswer.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -308,6 +312,44 @@ export default function Answer() {
     });
   };
 
+  const handleSendToDocuSign = async () => {
+    if (!answer?.ai_polished_answer) {
+      toast({
+        title: 'No polished answer',
+        description: 'Please polish your answer first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSendingToDocuSign(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-to-docusign', {
+        body: {
+          answerId: answer.id,
+          grantName: grant.name,
+          polishedAnswer: answer.ai_polished_answer,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sent to DocuSign!',
+        description: 'Your application has been sent for signing',
+      });
+    } catch (error: any) {
+      console.error('Error sending to DocuSign:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to send to DocuSign',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingToDocuSign(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -337,11 +379,34 @@ export default function Answer() {
                   {question.word_limit} words max
                 </Badge>
               )}
+              {estimatedTime && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  ~{estimatedTime} min
+                </Badge>
+              )}
+              {difficulty && (
+                <Badge 
+                  variant="outline"
+                  className={
+                    difficulty === 'easy' ? 'border-green-500 text-green-500' :
+                    difficulty === 'medium' ? 'border-yellow-500 text-yellow-500' :
+                    difficulty === 'hard' ? 'border-orange-500 text-orange-500' :
+                    'border-red-500 text-red-500'
+                  }
+                >
+                  <Brain className="h-3 w-3 mr-1" />
+                  {difficulty.charAt(0).toUpperCase() + difficulty.slice(1).replace('_', ' ')}
+                </Badge>
+              )}
             </div>
             <CardTitle className="text-xl md:text-2xl">{question?.question_text}</CardTitle>
             {question?.helper_text && (
               <CardDescription className="text-sm md:text-base mt-2">{question.helper_text}</CardDescription>
             )}
+            <div className="mt-4">
+              <PresenceIndicator answerId={answer?.id} />
+            </div>
           </CardHeader>
         </Card>
 
@@ -510,6 +575,25 @@ export default function Answer() {
                 >
                   <Copy className="mr-2 h-4 w-4" />
                   Copy to Clipboard
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSendToDocuSign}
+                  disabled={sendingToDocuSign}
+                  className="self-start sm:self-auto"
+                >
+                  {sendingToDocuSign ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <FileSignature className="mr-2 h-4 w-4" />
+                      Send to DocuSign
+                    </>
+                  )}
                 </Button>
               </div>
               <CardDescription className="text-base">Professional, grant-ready response - ready to submit</CardDescription>
