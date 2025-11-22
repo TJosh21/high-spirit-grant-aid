@@ -85,7 +85,7 @@ export default function Home() {
       <div className="bg-gradient-to-br from-primary via-primary-hover to-primary py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <h1 className="mb-3 text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground">
+            <h1 className="mb-3 text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground font-display">
               Welcome back, {profile?.name?.split(' ')[0] || 'there'}! 👋
             </h1>
             <p className="text-base md:text-lg text-primary-foreground/90">
@@ -98,37 +98,52 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         {/* Stats Cards */}
         <div className="mb-10 grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Card className="border-l-4 border-l-primary shadow-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <Card className="border-l-4 border-l-primary shadow-card hover:shadow-premium overflow-hidden relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center justify-between">
                 Applications Started
+                <TrendingUp className="h-4 w-4 text-primary" />
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl md:text-4xl font-bold text-primary">{stats.total}</div>
+            <CardContent className="relative z-10">
+              <div className="text-3xl md:text-4xl font-bold text-primary animate-count-up font-display">{stats.total}</div>
+              <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full animate-shimmer" style={{ width: `${Math.min((stats.total / 10) * 100, 100)}%` }}></div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-accent shadow-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <Card className="border-l-4 border-l-accent shadow-card hover:shadow-premium overflow-hidden relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center justify-between">
                 Ready to Submit
+                <Sparkles className="h-4 w-4 text-accent" />
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl md:text-4xl font-bold text-accent">{stats.ready}</div>
+            <CardContent className="relative z-10">
+              <div className="text-3xl md:text-4xl font-bold text-accent animate-count-up font-display">{stats.ready}</div>
+              <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
+                <div className="h-full bg-accent rounded-full animate-shimmer" style={{ width: `${Math.min((stats.ready / 10) * 100, 100)}%` }}></div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-primary shadow-card sm:col-span-2 lg:col-span-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <Card className="border-l-4 border-l-primary shadow-card hover:shadow-premium sm:col-span-2 lg:col-span-1 overflow-hidden relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="pb-3 relative z-10">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center justify-between">
                 Success Rate
+                <Target className="h-4 w-4 text-primary" />
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl md:text-4xl font-bold text-primary">
+            <CardContent className="relative z-10">
+              <div className="text-3xl md:text-4xl font-bold text-primary animate-count-up font-display">
                 {stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0}%
+              </div>
+              <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500" style={{ width: `${stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0}%` }}></div>
               </div>
             </CardContent>
           </Card>
@@ -136,9 +151,9 @@ export default function Home() {
 
         {/* Recommended Grants */}
         <div className="mb-10">
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b-2 border-accent">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b-2 border-accent/50">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-primary mb-1">Recommended For You</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-primary mb-1 font-display">Recommended For You</h2>
               <p className="text-sm md:text-base text-muted-foreground">Funding opportunities matching your business profile</p>
             </div>
             <Link to="/grants" className="self-start sm:self-auto">

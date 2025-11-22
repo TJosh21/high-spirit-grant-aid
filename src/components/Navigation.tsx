@@ -51,11 +51,12 @@ export function Navigation() {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <div className="bg-primary rounded-xl p-2.5 hover:bg-primary-hover transition-colors duration-200">
-              <span className="text-xl font-bold text-primary-foreground">HS</span>
+            <div className="relative bg-gradient-to-br from-primary via-primary to-primary-hover rounded-xl p-2.5 hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-premium group">
+              <span className="text-xl font-bold text-primary-foreground font-display">HS</span>
+              <div className="absolute inset-0 bg-accent/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
             </div>
             <div className="hidden md:block">
-              <h1 className="text-lg font-bold text-primary leading-tight">High Spirit</h1>
+              <h1 className="text-lg font-bold text-primary leading-tight font-display">High Spirit</h1>
               <p className="text-xs text-muted-foreground -mt-0.5">Grant Assistant</p>
             </div>
           </div>
