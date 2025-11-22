@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name: string) => {
     const redirectUrl = `${window.location.origin}/home`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -61,6 +61,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     });
+    
+    // Send notification for new user registration
+    if (!error && data.user) {
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            type: 'user_registration',
+            data: {
+              name: name,
+              email: email,
+              timestamp: new Date().toISOString(),
+              profileLink: `${window.location.origin}/profile`,
+            }
+          }
+        });
+      } catch (notifError) {
+        console.error('Failed to send registration notification:', notifError);
+      }
+    }
+    
     return { error };
   };
 

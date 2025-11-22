@@ -173,6 +173,24 @@ export default function Answer() {
         status: 'in_progress',
       });
 
+      // Send notification for rough answer submission
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            type: 'rough_answer_submitted',
+            data: {
+              grantName: grant?.name || 'Unknown Grant',
+              questionText: question?.question_text || 'Unknown Question',
+              roughAnswer: userRoughAnswer,
+              userEmail: user?.email || 'Unknown',
+              timestamp: new Date().toISOString(),
+            }
+          }
+        });
+      } catch (notifError) {
+        console.error('Failed to send rough answer notification:', notifError);
+      }
+
       const { data, error } = await supabase.functions.invoke('ai-grant-assistant', {
         body: {
           type: 'polish',
@@ -191,6 +209,25 @@ export default function Answer() {
         status: 'ready',
         last_ai_run_at: new Date().toISOString(),
       });
+
+      // Send notification for polished answer generation
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            type: 'polished_answer_generated',
+            data: {
+              grantName: grant?.name || 'Unknown Grant',
+              questionText: question?.question_text || 'Unknown Question',
+              roughAnswer: userRoughAnswer,
+              polishedAnswer: data.polished_answer,
+              userEmail: user?.email || 'Unknown',
+              timestamp: new Date().toISOString(),
+            }
+          }
+        });
+      } catch (notifError) {
+        console.error('Failed to send polished answer notification:', notifError);
+      }
 
       toast({
         title: 'Answer polished!',

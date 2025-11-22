@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +39,22 @@ export default function Auth() {
             variant: 'destructive',
           });
         } else {
+          // Send login notification
+          try {
+            await supabase.functions.invoke('send-notification', {
+              body: {
+                type: 'user_login',
+                data: {
+                  email,
+                  timestamp: new Date().toISOString(),
+                  deviceInfo: navigator.userAgent,
+                  ipAddress: 'Not available',
+                }
+              }
+            });
+          } catch (notifError) {
+            console.error('Failed to send login notification:', notifError);
+          }
           navigate('/home');
         }
       } else {
