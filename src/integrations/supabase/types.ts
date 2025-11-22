@@ -168,6 +168,7 @@ export type Database = {
           id: string
           last_ai_run_at: string | null
           last_updated_at: string | null
+          organization_id: string | null
           question_id: string
           question_text_snapshot: string
           status: Database["public"]["Enums"]["answer_status"] | null
@@ -183,6 +184,7 @@ export type Database = {
           id?: string
           last_ai_run_at?: string | null
           last_updated_at?: string | null
+          organization_id?: string | null
           question_id: string
           question_text_snapshot: string
           status?: Database["public"]["Enums"]["answer_status"] | null
@@ -198,6 +200,7 @@ export type Database = {
           id?: string
           last_ai_run_at?: string | null
           last_updated_at?: string | null
+          organization_id?: string | null
           question_id?: string
           question_text_snapshot?: string
           status?: Database["public"]["Enums"]["answer_status"] | null
@@ -211,6 +214,13 @@ export type Database = {
             columns: ["grant_id"]
             isOneToOne: false
             referencedRelation: "grants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -251,6 +261,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      documents: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          organization_id: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          organization_id?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          organization_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       grants: {
         Row: {
@@ -354,6 +408,59 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      organization_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -514,11 +621,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_org_role: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["org_role"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
     }
@@ -537,6 +652,7 @@ export type Database = {
         | "budget_overview"
         | "profit_and_loss_summary"
       grant_status: "open" | "coming_soon" | "closed"
+      org_role: "owner" | "admin" | "member" | "viewer"
       subscription_plan: "free" | "pro" | "elite"
       subscription_status: "active" | "canceled" | "trial"
     }
@@ -682,6 +798,7 @@ export const Constants = {
         "profit_and_loss_summary",
       ],
       grant_status: ["open", "coming_soon", "closed"],
+      org_role: ["owner", "admin", "member", "viewer"],
       subscription_plan: ["free", "pro", "elite"],
       subscription_status: ["active", "canceled", "trial"],
     },
