@@ -73,7 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: email,
               timestamp: new Date().toISOString(),
               profileLink: `${window.location.origin}/profile`,
-            }
+              userId: data.user.id,
+            },
+            channels: { email: true, sms: true, push: false }
           }
         });
       } catch (notifError) {

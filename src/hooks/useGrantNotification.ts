@@ -39,7 +39,10 @@ export function useGrantNotification() {
                   tags: tags,
                   createdBy: 'Admin System',
                   timestamp: new Date().toISOString(),
-                }
+                  grantId: newGrant.id,
+                  slug: newGrant.slug,
+                },
+                channels: { email: true, sms: false, push: false }
               }
             });
           } catch (error) {
