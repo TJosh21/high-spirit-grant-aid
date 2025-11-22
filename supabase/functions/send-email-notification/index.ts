@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface EmailNotificationRequest {
-  type: 'deadline_reminder' | 'status_update' | 'new_grant';
+  type: 'deadline_reminder' | 'status_update' | 'new_grant' | 'member_invitation';
   to: string;
   data: {
     grantName?: string;
@@ -19,6 +19,9 @@ interface EmailNotificationRequest {
     grantSlug?: string;
     questionId?: string;
     newGrantCount?: number;
+    organizationName?: string;
+    inviterName?: string;
+    role?: string;
   };
 }
 
@@ -76,6 +79,19 @@ const handler = async (req: Request): Promise<Response> => {
           <a href="${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/grants" 
              style="display: inline-block; padding: 12px 24px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 8px; margin-top: 16px;">
             Browse Grants
+          </a>
+        `;
+        break;
+
+      case 'member_invitation':
+        subject = `🎉 You've been invited to join ${data.organizationName}`;
+        html = `
+          <h1>Organization Invitation</h1>
+          <p><strong>${data.inviterName}</strong> has invited you to join <strong>${data.organizationName}</strong> as a <strong>${data.role}</strong>.</p>
+          <p>You can now collaborate on grant applications with your team members!</p>
+          <a href="${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/team" 
+             style="display: inline-block; padding: 12px 24px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 8px; margin-top: 16px;">
+            View Team
           </a>
         `;
         break;
