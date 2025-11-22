@@ -137,64 +137,67 @@ export default function GrantDetail() {
         </Link>
 
         {/* Grant Header */}
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-card">
           <CardHeader>
             <div className="mb-4 flex flex-wrap gap-2">
-              {grant.target_audience_tags?.map((tag: string) => (
+              {grant.status === 'open' && (
+                <Badge variant="gold" className="font-semibold">Open Now</Badge>
+              )}
+              {grant.target_audience_tags?.slice(0, 3).map((tag: string) => (
                 <Badge key={tag} variant="secondary">
                   {tag}
                 </Badge>
               ))}
-              {grant.industry_tags?.map((tag: string) => (
+              {grant.industry_tags?.slice(0, 2).map((tag: string) => (
                 <Badge key={tag} variant="outline">
                   {tag}
                 </Badge>
               ))}
             </div>
-            <CardTitle className="text-3xl">{grant.name}</CardTitle>
-            <CardDescription className="text-base">{grant.short_description}</CardDescription>
+            <CardTitle className="text-2xl md:text-3xl mb-2">{grant.name}</CardTitle>
+            <CardDescription className="text-base md:text-lg">{grant.short_description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {grant.long_description && (
               <div>
-                <h3 className="mb-2 font-semibold">About This Grant</h3>
-                <p className="text-muted-foreground">{grant.long_description}</p>
+                <h3 className="mb-3 text-lg font-bold text-primary">About This Grant</h3>
+                <p className="text-base leading-relaxed text-muted-foreground">{grant.long_description}</p>
               </div>
             )}
 
             <Separator />
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Amount</p>
-                <p className="text-lg font-semibold text-accent">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Funding Amount</p>
+                <p className="text-xl font-bold text-accent">
                   {grant.amount_min && grant.amount_max
                     ? `$${grant.amount_min.toLocaleString()} - $${grant.amount_max.toLocaleString()}`
                     : 'Varies'}
                 </p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Sponsor</p>
-                <p className="text-lg font-semibold">{grant.sponsor_name}</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Sponsor</p>
+                <p className="text-base font-semibold">{grant.sponsor_name}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Type</p>
-                <p className="text-lg font-semibold">{grant.sponsor_type || 'N/A'}</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Grant Type</p>
+                <p className="text-base font-semibold">{grant.sponsor_type || 'N/A'}</p>
               </div>
               {grant.deadline && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Deadline</p>
-                  <p className="text-lg font-semibold">
-                    {new Date(grant.deadline).toLocaleDateString()}
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Deadline</p>
+                  <p className="text-base font-bold text-destructive">
+                    {new Date(grant.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>
               )}
             </div>
 
             {grant.website_url && (
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" size="lg">
                 <a href={grant.website_url} target="_blank" rel="noopener noreferrer">
-                  Visit Grant Website
+                  Visit Official Grant Website
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </a>
               </Button>
@@ -206,10 +209,10 @@ export default function GrantDetail() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Content - Questions */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-primary">Application Questions</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+              <h2 className="text-2xl md:text-3xl font-bold text-primary">Application Questions</h2>
               {questions.length > 0 && (
-                <Badge variant="outline" className="gap-2">
+                <Badge variant="default" className="gap-2 self-start sm:self-auto">
                   <FileText className="w-4 h-4" />
                   {questions.length} Questions
                 </Badge>

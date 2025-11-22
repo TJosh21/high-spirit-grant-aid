@@ -275,43 +275,43 @@ export default function Answer() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <Link to={`/grants/${grantSlug}`}>
-          <Button variant="ghost" className="mb-4">
+          <Button variant="ghost" className="mb-4 -ml-2">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Grant
           </Button>
         </Link>
 
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-card">
           <CardHeader>
-            <div className="mb-2">
+            <div className="mb-2 flex flex-wrap gap-2">
               <Badge variant="outline">{grant?.name}</Badge>
               {question?.word_limit && (
-                <Badge variant="secondary" className="ml-2">
+                <Badge variant="secondary">
                   {question.word_limit} words max
                 </Badge>
               )}
             </div>
-            <CardTitle className="text-2xl">{question?.question_text}</CardTitle>
+            <CardTitle className="text-xl md:text-2xl">{question?.question_text}</CardTitle>
             {question?.helper_text && (
-              <CardDescription className="text-base">{question.helper_text}</CardDescription>
+              <CardDescription className="text-sm md:text-base mt-2">{question.helper_text}</CardDescription>
             )}
           </CardHeader>
         </Card>
 
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-card">
           <CardHeader>
-            <CardTitle>Your Answer</CardTitle>
-            <CardDescription>Write your thoughts - AI will help polish it</CardDescription>
+            <CardTitle className="text-xl">Your Rough Answer</CardTitle>
+            <CardDescription className="text-base">Write your thoughts naturally - our AI will polish it into a professional grant response</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
               value={userRoughAnswer}
               onChange={(e) => setUserRoughAnswer(e.target.value)}
-              placeholder="Share your thoughts here... Don't worry about making it perfect, the AI will help polish your answer."
-              rows={8}
-              className="resize-none"
+              placeholder="Write your response here naturally... Don't worry about perfect grammar or phrasing - just share your thoughts, and our AI will transform it into a professional grant answer."
+              rows={10}
+              className="resize-none text-base"
             />
             
             <div className="flex items-center justify-between gap-4">
@@ -346,38 +346,41 @@ export default function Answer() {
               </Alert>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={getSuggestions}
                 disabled={loadingSuggestions || !userRoughAnswer.trim()}
                 variant="outline"
+                size="lg"
+                className="flex-1"
               >
                 {loadingSuggestions ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Getting Suggestions...
+                    Getting suggestions...
                   </>
                 ) : (
                   <>
                     <Lightbulb className="mr-2 h-4 w-4" />
-                    Get AI Suggestions
+                    Get Suggestions
                   </>
                 )}
               </Button>
               <Button
                 onClick={handlePolish}
                 disabled={aiProcessing || !userRoughAnswer.trim()}
-                className="bg-gradient-royal"
+                size="lg"
+                className="flex-1"
               >
                 {aiProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    Polishing your answer...
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Polish with AI
+                    Polish My Answer
                   </>
                 )}
               </Button>
@@ -410,26 +413,27 @@ export default function Answer() {
         )}
 
         {answer?.ai_polished_answer && (
-          <Card className="border-accent/20 bg-accent/5">
+          <Card className="shadow-premium border-accent/30">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <CardTitle className="flex items-center text-xl">
                   <Sparkles className="mr-2 h-5 w-5 text-accent" />
-                  Polished Grant Answer
+                  Your Polished Answer
                 </CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => copyToClipboard(answer.ai_polished_answer)}
+                  className="self-start sm:self-auto"
                 >
                   <Copy className="mr-2 h-4 w-4" />
-                  Copy
+                  Copy to Clipboard
                 </Button>
               </div>
-              <CardDescription>Professional, grant-ready response</CardDescription>
+              <CardDescription className="text-base">Professional, grant-ready response - ready to submit</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="whitespace-pre-wrap rounded-lg bg-background p-4 text-foreground">
+              <div className="whitespace-pre-wrap rounded-xl bg-secondary/50 p-6 text-base leading-relaxed border border-border">
                 {answer.ai_polished_answer}
               </div>
             </CardContent>

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Circle, AlertCircle, FileText, Target, TrendingUp } from 'lucide-react';
 
@@ -95,51 +96,51 @@ export default function MyApplications() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">My Applications</h1>
-          <p className="text-muted-foreground text-lg">
+          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">My Applications</h1>
+          <p className="text-muted-foreground text-base md:text-lg">
             Track your progress on grant applications
           </p>
         </div>
 
         {applications.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
             <Card className="shadow-card">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Target className="w-4 h-4 text-accent" />
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
                   Active Applications
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-primary">{applications.length}</div>
+                <div className="text-3xl md:text-4xl font-bold text-primary">{applications.length}</div>
               </CardContent>
             </Card>
 
             <Card className="shadow-card">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  Questions Completed
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-accent" />
+                  Completed Questions
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-primary">
+                <div className="text-3xl md:text-4xl font-bold text-accent">
                   {applications.reduce((sum, app) => sum + app.completedQuestions, 0)}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-card">
+            <Card className="shadow-card sm:col-span-2 md:col-span-1">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-accent" />
-                  Avg Progress
+                  Average Progress
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-primary">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
                   {Math.round(
                     applications.reduce((sum, app) => 
                       sum + (app.totalQuestions > 0 ? (app.completedQuestions / app.totalQuestions) * 100 : 0), 0
@@ -159,56 +160,56 @@ export default function MyApplications() {
               return (
                 <Card key={app.grant.id} className="shadow-card hover:shadow-card-hover transition-all">
                   <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
                         <Link to={`/grants/${app.grant.slug}`}>
-                          <CardTitle className="text-2xl hover:text-primary transition-colors mb-2">
+                          <CardTitle className="text-xl md:text-2xl hover:text-primary transition-colors mb-2 break-words">
                             {app.grant.name}
                           </CardTitle>
                         </Link>
-                        <CardDescription className="text-base">
+                        <CardDescription className="text-sm md:text-base mb-2">
                           {app.grant.short_description}
                         </CardDescription>
                         {app.grant.amount_min && app.grant.amount_max && (
-                          <p className="text-accent font-semibold mt-2">
+                          <p className="text-accent font-bold text-base md:text-lg mt-2">
                             ${app.grant.amount_min.toLocaleString()} - ${app.grant.amount_max.toLocaleString()}
                           </p>
                         )}
                       </div>
                       <Badge 
                         variant={progress === 100 ? "default" : "outline"} 
-                        className={`${progress === 100 ? 'bg-green-600' : ''} gap-2 px-3 py-1`}
+                        className={`${progress === 100 ? 'bg-accent text-accent-foreground' : ''} gap-2 px-3 py-1 whitespace-nowrap self-start sm:self-auto`}
                       >
                         {app.completedQuestions} of {app.totalQuestions}
                       </Badge>
                     </div>
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-muted-foreground">Progress</span>
-                        <span className="text-sm font-bold text-primary">{Math.round(progress)}%</span>
+                        <span className="text-xs md:text-sm font-medium text-muted-foreground">Progress</span>
+                        <span className="text-xs md:text-sm font-bold text-primary">{Math.round(progress)}%</span>
                       </div>
                       <Progress 
                         value={progress} 
-                        className="h-3"
+                        className="h-2.5 md:h-3"
                       />
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <p className="text-sm font-semibold text-primary">Application Questions:</p>
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <p className="text-xs md:text-sm font-semibold text-primary uppercase tracking-wide">Questions:</p>
+                      <div className="grid gap-3 sm:grid-cols-2">
                         {app.answers.map((answer: any, index: number) => (
                           <Link
                             key={answer.id}
                             to={`/answer/${app.grant.slug}/${answer.question_id}`}
-                            className="flex items-start gap-3 rounded-xl border border-border p-4 transition-all hover:bg-secondary hover:shadow-card"
+                            className="flex items-start gap-3 rounded-xl border border-border p-3 md:p-4 transition-all hover:bg-secondary hover:shadow-card"
                           >
                             <div className="flex-shrink-0 mt-0.5">
                               {getStatusIcon(answer.status)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs text-muted-foreground mb-1">Question {index + 1}</p>
-                              <p className="line-clamp-2 text-sm font-medium text-foreground">
+                              <p className="line-clamp-2 text-xs md:text-sm font-medium text-foreground">
                                 {answer.question_text_snapshot}
                               </p>
                             </div>
@@ -223,16 +224,17 @@ export default function MyApplications() {
           </div>
         ) : (
           <Card className="shadow-card">
-            <CardContent className="py-16 text-center">
-              <FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-20" />
-              <p className="mb-2 text-xl font-bold text-primary">No applications started yet</p>
-              <p className="mb-6 text-muted-foreground max-w-md mx-auto">
-                Browse available grants and start your first application to access funding opportunities for your business
+            <CardContent className="py-12 md:py-16 text-center">
+              <FileText className="mx-auto mb-4 h-12 w-12 md:h-16 md:w-16 text-muted-foreground opacity-20" />
+              <p className="mb-2 text-lg md:text-xl font-bold text-primary">No applications started yet</p>
+              <p className="mb-6 text-sm md:text-base text-muted-foreground max-w-md mx-auto px-4">
+                Browse available grants and start your first application to access funding opportunities
               </p>
               <Link to="/grants">
-                <button className="rounded-xl bg-primary px-6 py-3 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-card">
+                <Button size="lg" className="gap-2">
                   Browse Grants
-                </button>
+                  <TrendingUp className="h-4 w-4" />
+                </Button>
               </Link>
             </CardContent>
           </Card>

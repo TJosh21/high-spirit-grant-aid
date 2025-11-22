@@ -32,7 +32,6 @@ export function Navigation() {
     { to: '/home', icon: Home, label: 'Home' },
     { to: '/grants', icon: FileText, label: 'Grants' },
     { to: '/my-applications', icon: CheckSquare, label: 'Applications' },
-    { to: '/documents', icon: FileStack, label: 'Documents' },
     { to: '/profile', icon: User, label: 'Profile' },
   ];
 
