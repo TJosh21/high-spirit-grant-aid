@@ -277,7 +277,13 @@ export default function GrantDetail() {
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               {questions.length > 0 ? (
-                <ApplicationProgress questions={questions} answers={answers} />
+                <ApplicationProgress 
+                  grantName={grant.name}
+                  totalQuestions={questions.length}
+                  answeredQuestions={answers.filter(a => a.status !== 'not_started').length}
+                  readyQuestions={answers.filter(a => a.status === 'ready').length}
+                  deadline={grant.deadline}
+                />
               ) : (
                 <Card className="shadow-card">
                   <CardHeader>

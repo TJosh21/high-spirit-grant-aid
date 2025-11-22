@@ -1,153 +1,135 @@
-import { CheckCircle2, Circle, Clock, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-
-interface Question {
-  id: string;
-  question_text: string;
-  order_index: number;
-}
-
-interface Answer {
-  question_id: string;
-  status: 'not_started' | 'in_progress' | 'needs_clarification' | 'ready';
-  ai_polished_answer: string | null;
-}
+import { CheckCircle2, Circle, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ApplicationProgressProps {
-  questions: Question[];
-  answers: Answer[];
+  grantName: string;
+  totalQuestions: number;
+  answeredQuestions: number;
+  readyQuestions: number;
+  deadline?: string;
 }
 
-export function ApplicationProgress({ questions, answers }: ApplicationProgressProps) {
-  const sortedQuestions = [...questions].sort((a, b) => a.order_index - b.order_index);
-  
-  const getQuestionStatus = (questionId: string) => {
-    const answer = answers.find(a => a.question_id === questionId);
-    return answer?.status || 'not_started';
-  };
+export function ApplicationProgress({
+  grantName,
+  totalQuestions,
+  answeredQuestions,
+  readyQuestions,
+  deadline
+}: ApplicationProgressProps) {
+  const completionPercentage = totalQuestions > 0 
+    ? Math.round((readyQuestions / totalQuestions) * 100)
+    : 0;
 
-  const getAnswerCount = () => {
-    const completed = answers.filter(a => 
-      a.status === 'ready' && a.ai_polished_answer
-    ).length;
-    return { completed, total: questions.length };
-  };
+  const inProgressPercentage = totalQuestions > 0 
+    ? Math.round(((answeredQuestions - readyQuestions) / totalQuestions) * 100)
+    : 0;
 
-  const { completed, total } = getAnswerCount();
-  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'ready':
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-      case 'in_progress':
-        return <Clock className="w-5 h-5 text-blue-600" />;
-      case 'needs_clarification':
-        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      default:
-        return <Circle className="w-5 h-5 text-muted-foreground" />;
+  const getStatusBadge = () => {
+    if (completionPercentage === 100) {
+      return <Badge className="bg-green-500">Complete</Badge>;
+    } else if (answeredQuestions > 0) {
+      return <Badge variant="secondary">In Progress</Badge>;
+    } else {
+      return <Badge variant="outline">Not Started</Badge>;
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ready':
-        return <Badge className="bg-green-600">Complete</Badge>;
-      case 'in_progress':
-        return <Badge variant="outline" className="border-blue-600 text-blue-600">In Progress</Badge>;
-      case 'needs_clarification':
-        return <Badge variant="outline" className="border-yellow-600 text-yellow-600">Needs Review</Badge>;
-      default:
-        return <Badge variant="outline" className="text-muted-foreground">Not Started</Badge>;
-    }
-  };
+  const milestones = [
+    { label: 'Started', threshold: 0, completed: answeredQuestions > 0 },
+    { label: '25% Done', threshold: 25, completed: completionPercentage >= 25 },
+    { label: '50% Done', threshold: 50, completed: completionPercentage >= 50 },
+    { label: '75% Done', threshold: 75, completed: completionPercentage >= 75 },
+    { label: 'Complete', threshold: 100, completed: completionPercentage === 100 }
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Overall Progress */}
-      <div className="bg-card rounded-2xl p-6 border border-border shadow-card">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-primary">Application Progress</h3>
-            <p className="text-sm text-muted-foreground">
-              {completed} of {total} questions completed
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-primary">{percentage}%</div>
-            <div className="text-xs text-muted-foreground">Complete</div>
-          </div>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
-          <div
-            className="bg-gradient-to-r from-primary to-accent h-full transition-all duration-500 rounded-full"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Question List */}
-      <div className="space-y-3">
-        {sortedQuestions.map((question, index) => {
-          const status = getQuestionStatus(question.id);
-          
-          return (
-            <div
-              key={question.id}
-              className="bg-card rounded-xl p-4 border border-border hover:shadow-card-hover transition-all"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 mt-0.5">
-                  {getStatusIcon(status)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Question {index + 1}
-                        </span>
-                        {getStatusBadge(status)}
-                      </div>
-                      <p className="text-sm font-medium text-foreground line-clamp-2">
-                        {question.question_text}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <Card className="overflow-hidden">
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold truncate">{grantName}</h3>
+              {deadline && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Due: {new Date(deadline).toLocaleDateString()}
+                </p>
+              )}
             </div>
-          );
-        })}
-      </div>
+            {getStatusBadge()}
+          </div>
 
-      {/* Status Legend */}
-      <div className="bg-muted/30 rounded-xl p-4 border border-border">
-        <h4 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
-          Status Guide
-        </h4>
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <Circle className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Not Started</span>
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Progress</span>
+              <span className="font-semibold">{completionPercentage}%</span>
+            </div>
+            <Progress value={completionPercentage} className="h-2" />
           </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-blue-600" />
-            <span className="text-foreground">In Progress</span>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 pt-2">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                <Circle className="h-3 w-3" />
+                <span className="text-xs">Total</span>
+              </div>
+              <p className="text-lg font-bold">{totalQuestions}</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-blue-500 mb-1">
+                <Clock className="h-3 w-3" />
+                <span className="text-xs">In Progress</span>
+              </div>
+              <p className="text-lg font-bold">{answeredQuestions - readyQuestions}</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-green-500 mb-1">
+                <CheckCircle2 className="h-3 w-3" />
+                <span className="text-xs">Ready</span>
+              </div>
+              <p className="text-lg font-bold">{readyQuestions}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-yellow-600" />
-            <span className="text-foreground">Needs Review</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
-            <span className="text-foreground">Complete</span>
+
+          {/* Milestones */}
+          <div className="pt-4 border-t">
+            <p className="text-xs font-medium text-muted-foreground mb-3">Milestones</p>
+            <div className="flex items-center justify-between">
+              {milestones.map((milestone, index) => (
+                <motion.div
+                  key={milestone.label}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex flex-col items-center"
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                      milestone.completed
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {milestone.completed ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <Circle className="h-4 w-4" />
+                    )}
+                  </div>
+                  <span className="text-[10px] mt-1 text-muted-foreground text-center max-w-[60px]">
+                    {milestone.label}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
