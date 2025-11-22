@@ -4,10 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MobileApp } from "@/mobile/MobileApp";
 import { Footer } from "@/components/Footer";
+import { PageTransition } from "@/components/PageTransition";
+import { OnboardingTour } from "@/components/OnboardingTour";
 import { useGrantNotification } from "@/hooks/useGrantNotification";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
@@ -26,26 +30,30 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   useGrantNotification();
+  useRealtimeNotifications();
   
   return (
     <div className="flex flex-col min-h-screen">
+      <OnboardingTour />
       <div className="flex-1">
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/grants" element={<ProtectedRoute><Grants /></ProtectedRoute>} />
-          <Route path="/grants/:slug" element={<ProtectedRoute><GrantDetail /></ProtectedRoute>} />
-          <Route path="/answer/:grantSlug/:questionId" element={<ProtectedRoute><Answer /></ProtectedRoute>} />
-          <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
-          <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
-          <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <PageTransition>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/grants" element={<ProtectedRoute><Grants /></ProtectedRoute>} />
+            <Route path="/grants/:slug" element={<ProtectedRoute><GrantDetail /></ProtectedRoute>} />
+            <Route path="/answer/:grantSlug/:questionId" element={<ProtectedRoute><Answer /></ProtectedRoute>} />
+            <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
+            <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </PageTransition>
       </div>
       <Footer />
     </div>
@@ -54,17 +62,19 @@ function AppContent() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <MobileApp>
-            <AppContent />
-          </MobileApp>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider defaultTheme="light" storageKey="high-spirit-theme">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <MobileApp>
+              <AppContent />
+            </MobileApp>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

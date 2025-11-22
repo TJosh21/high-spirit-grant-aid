@@ -5,6 +5,8 @@ import { Home, FileText, CheckSquare, FileStack, User, LogOut, Menu, X, Shield }
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { NotificationBell } from './NotificationBell';
+import { ThemeToggle } from './ThemeToggle';
+import { motion } from 'framer-motion';
 
 export function Navigation() {
   const { signOut, user } = useAuth();
@@ -29,16 +31,16 @@ export function Navigation() {
   };
 
   const baseNavItems = [
-    { to: '/home', icon: Home, label: 'Home' },
-    { to: '/grants', icon: FileText, label: 'Grants' },
-    { to: '/my-applications', icon: CheckSquare, label: 'Applications' },
-    { to: '/profile', icon: User, label: 'Profile' },
+    { to: '/home', icon: Home, label: 'Home', dataTour: 'home' },
+    { to: '/grants', icon: FileText, label: 'Grants', dataTour: 'grants' },
+    { to: '/my-applications', icon: CheckSquare, label: 'Applications', dataTour: 'applications' },
+    { to: '/profile', icon: User, label: 'Profile', dataTour: 'profile' },
   ];
 
   const adminNavItems = [
-    { to: '/admin', icon: Shield, label: 'Admin Dashboard' },
-    { to: '/admin/analytics', icon: Shield, label: 'Analytics' },
-    { to: '/admin/settings', icon: Shield, label: 'Settings' },
+    { to: '/admin', icon: Shield, label: 'Admin Dashboard', dataTour: undefined },
+    { to: '/admin/analytics', icon: Shield, label: 'Analytics', dataTour: undefined },
+    { to: '/admin/settings', icon: Shield, label: 'Settings', dataTour: undefined },
   ];
 
   const navItems = isAdmin 
@@ -46,7 +48,12 @@ export function Navigation() {
     : baseNavItems;
 
   return (
-    <nav className="bg-card border-b border-border shadow-card sticky top-0 z-50">
+    <motion.nav 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-card/80 backdrop-blur-lg border-b border-border shadow-card sticky top-0 z-50"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -67,6 +74,7 @@ export function Navigation() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                data-tour={item.dataTour}
                 className={({ isActive }) =>
                   `flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive
@@ -83,7 +91,12 @@ export function Navigation() {
                 )}
               </NavLink>
             ))}
-            <NotificationBell />
+            <div data-tour="notifications">
+              <NotificationBell />
+            </div>
+            <div data-tour="theme-toggle">
+              <ThemeToggle />
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -144,6 +157,6 @@ export function Navigation() {
           </div>
         )}
       </div>
-    </nav>
+    </motion.nav>
   );
 }
