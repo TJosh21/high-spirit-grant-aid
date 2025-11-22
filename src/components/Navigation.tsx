@@ -35,7 +35,6 @@ export function Navigation() {
     { to: '/grants', icon: FileText, label: 'Grants', dataTour: 'grants' },
     { to: '/my-applications', icon: CheckSquare, label: 'Applications', dataTour: 'applications' },
     { to: '/documents', icon: FileStack, label: 'Documents', dataTour: undefined },
-    { to: '/team', icon: User, label: 'Team', dataTour: undefined },
     { to: '/analytics', icon: Shield, label: 'Analytics', dataTour: undefined },
     { to: '/profile', icon: User, label: 'Profile', dataTour: 'profile' },
   ];
