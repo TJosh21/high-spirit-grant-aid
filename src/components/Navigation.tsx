@@ -31,7 +31,7 @@ export function Navigation() {
   };
 
   const baseNavItems = [
-    { to: '/home', icon: Home, label: 'Home', dataTour: 'home' },
+    { to: '/dashboard', icon: Home, label: 'Dashboard', dataTour: 'home' },
     { to: '/grants', icon: FileText, label: 'Grants', dataTour: 'grants' },
     { to: '/my-applications', icon: CheckSquare, label: 'Applications', dataTour: 'applications' },
     { to: '/documents', icon: FileStack, label: 'Documents', dataTour: undefined },
