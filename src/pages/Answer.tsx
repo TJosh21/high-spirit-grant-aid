@@ -7,10 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save } from 'lucide-react';
+import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save, MessageSquare, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { ApplicationTimeline } from '@/components/ApplicationTimeline';
+import { AnswerComments } from '@/components/AnswerComments';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -340,6 +343,21 @@ export default function Answer() {
           </CardHeader>
         </Card>
 
+        <Tabs defaultValue="answer" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="answer">Answer</TabsTrigger>
+            <TabsTrigger value="timeline">
+              <Clock className="mr-2 h-4 w-4" />
+              Timeline
+            </TabsTrigger>
+            <TabsTrigger value="comments">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Comments
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="answer" className="space-y-6">
+
         <Card className="mb-6 shadow-card">
           <CardHeader>
             <CardTitle className="text-xl">Your Rough Answer</CardTitle>
@@ -491,8 +509,18 @@ export default function Answer() {
                 {answer.ai_polished_answer}
               </div>
             </CardContent>
-          </Card>
-        )}
+            </Card>
+          )}
+          </TabsContent>
+
+          <TabsContent value="timeline">
+            {answer && <ApplicationTimeline answerId={answer.id} />}
+          </TabsContent>
+
+          <TabsContent value="comments">
+            {answer && <AnswerComments answerId={answer.id} />}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
