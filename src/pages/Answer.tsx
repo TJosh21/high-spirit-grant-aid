@@ -175,18 +175,22 @@ export default function Answer() {
 
       // Send notification for rough answer submission
       try {
-        await supabase.functions.invoke('send-notification', {
-          body: {
-            type: 'rough_answer_submitted',
-            data: {
-              grantName: grant?.name || 'Unknown Grant',
-              questionText: question?.question_text || 'Unknown Question',
-              roughAnswer: userRoughAnswer,
-              userEmail: user?.email || 'Unknown',
-              timestamp: new Date().toISOString(),
+          await supabase.functions.invoke('send-notification', {
+            body: {
+              type: 'rough_answer_submitted',
+              data: {
+                grantName: grant?.name || 'Unknown Grant',
+                questionText: question?.question_text || 'Unknown Question',
+                roughAnswer: userRoughAnswer,
+                userEmail: user?.email || 'Unknown',
+                timestamp: new Date().toISOString(),
+                userId: user?.id,
+                grantSlug: grantSlug,
+                questionId: questionId,
+              },
+              channels: { email: true, sms: false, push: true }
             }
-          }
-        });
+          });
       } catch (notifError) {
         console.error('Failed to send rough answer notification:', notifError);
       }
@@ -222,7 +226,11 @@ export default function Answer() {
               polishedAnswer: data.polished_answer,
               userEmail: user?.email || 'Unknown',
               timestamp: new Date().toISOString(),
-            }
+              userId: user?.id,
+              grantSlug: grantSlug,
+              questionId: questionId,
+            },
+            channels: { email: true, sms: false, push: true }
           }
         });
       } catch (notifError) {

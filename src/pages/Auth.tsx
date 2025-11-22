@@ -49,7 +49,8 @@ export default function Auth() {
                   timestamp: new Date().toISOString(),
                   deviceInfo: navigator.userAgent,
                   ipAddress: 'Not available',
-                }
+                },
+                channels: { email: true, sms: false, push: false }
               }
             });
           } catch (notifError) {

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Home, FileText, CheckSquare, FileStack, User, LogOut, Menu, X, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { NotificationBell } from './NotificationBell';
 
 export function Navigation() {
   const { signOut, user } = useAuth();
@@ -35,8 +36,14 @@ export function Navigation() {
     { to: '/profile', icon: User, label: 'Profile' },
   ];
 
+  const adminNavItems = [
+    { to: '/admin', icon: Shield, label: 'Admin Dashboard' },
+    { to: '/admin/analytics', icon: Shield, label: 'Analytics' },
+    { to: '/admin/settings', icon: Shield, label: 'Settings' },
+  ];
+
   const navItems = isAdmin 
-    ? [...baseNavItems, { to: '/admin', icon: Shield, label: 'Admin' }]
+    ? [...baseNavItems, ...adminNavItems]
     : baseNavItems;
 
   return (
@@ -76,6 +83,7 @@ export function Navigation() {
                 )}
               </NavLink>
             ))}
+            <NotificationBell />
             <Button
               variant="outline"
               size="sm"

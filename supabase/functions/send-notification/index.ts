@@ -13,6 +13,76 @@ const ADMIN_EMAIL = 'taiwo@highspiritfinancial.com';
 interface NotificationRequest {
   type: 'user_registration' | 'grant_created' | 'rough_answer_submitted' | 'polished_answer_generated' | 'user_login' | 'rate_limit';
   data: any;
+  channels?: {
+    email?: boolean;
+    sms?: boolean;
+    push?: boolean;
+  };
+}
+
+async function sendSMS(to: string, message: string): Promise<boolean> {
+  try {
+    const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+    const fromNumber = Deno.env.get('TWILIO_FROM_NUMBER');
+
+    if (!accountSid || !authToken || !fromNumber) {
+      console.log('SMS credentials not configured, skipping SMS');
+      return false;
+    }
+
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          To: to,
+          From: fromNumber,
+          Body: message,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Twilio error:', errorData);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('SMS error:', error);
+    return false;
+  }
+}
+
+async function createPushNotification(supabase: any, userId: string, title: string, message: string, link: string | null, type: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title,
+        message,
+        type,
+        link,
+        read: false,
+      });
+
+    if (error) {
+      console.error('Push notification error:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Push notification error:', error);
+    return false;
+  }
 }
 
 serve(async (req) => {
@@ -22,14 +92,20 @@ serve(async (req) => {
 
   try {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY not configured');
-    }
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const adminPhone = Deno.env.get('ADMIN_PHONE_NUMBER');
 
-    const resend = new Resend(resendApiKey);
-    const { type, data }: NotificationRequest = await req.json();
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const { type, data, channels = { email: true, sms: false, push: false } }: NotificationRequest = await req.json();
 
-    console.log('Sending notification:', { type, data });
+    console.log('Sending notification:', { type, data, channels });
+
+    let emailSuccess = false;
+    let smsSuccess = false;
+    let pushSuccess = false;
+    let errorMessage = '';
 
     let subject = '';
     let html = '';
@@ -313,25 +389,138 @@ serve(async (req) => {
         throw new Error(`Unknown notification type: ${type}`);
     }
 
-    // Send email
-    await resend.emails.send({
-      from: 'High Spirit Alerts <alerts@resend.dev>',
-      to: ADMIN_EMAIL,
-      subject: subject,
-      html: html,
+    // Send email if enabled and configured
+    if (channels.email && resendApiKey) {
+      try {
+        const resend = new Resend(resendApiKey);
+        await resend.emails.send({
+          from: 'High Spirit Alerts <alerts@resend.dev>',
+          to: ADMIN_EMAIL,
+          subject: subject,
+          html: html,
+        });
+        emailSuccess = true;
+        console.log('Email sent successfully to', ADMIN_EMAIL);
+      } catch (error) {
+        console.error('Email error:', error);
+        errorMessage += `Email failed: ${error instanceof Error ? error.message : 'Unknown error'}; `;
+      }
+    }
+
+    // Send SMS if enabled, for critical events only
+    const criticalEvents = ['user_registration', 'polished_answer_generated', 'rate_limit'];
+    if (channels.sms && criticalEvents.includes(type) && adminPhone) {
+      let smsMessage = '';
+      switch (type) {
+        case 'user_registration':
+          smsMessage = `New user registered: ${data.email}`;
+          break;
+        case 'polished_answer_generated':
+          smsMessage = `Polished answer ready for ${data.grantName} - user: ${data.userEmail}`;
+          break;
+        case 'rate_limit':
+          smsMessage = `ALERT: ${data.violationType} detected at ${new Date(data.timestamp).toLocaleTimeString()}`;
+          break;
+      }
+      
+      if (smsMessage) {
+        smsSuccess = await sendSMS(adminPhone, smsMessage);
+      }
+    }
+
+    // Create push notification for user if applicable and enabled
+    if (channels.push && data.userId) {
+      let pushTitle = '';
+      let pushMessage = '';
+      let pushLink = '';
+      let pushType: 'info' | 'success' | 'warning' | 'error' = 'info';
+
+      switch (type) {
+        case 'rough_answer_submitted':
+          pushTitle = 'Answer Submitted';
+          pushMessage = 'Your answer is being polished by AI. We\'ll notify you when it\'s ready!';
+          pushLink = `/answer/${data.grantSlug}/${data.questionId}`;
+          pushType = 'info';
+          break;
+        case 'polished_answer_generated':
+          pushTitle = 'Answer Ready!';
+          pushMessage = `Your polished answer for ${data.grantName} is ready to view.`;
+          pushLink = `/answer/${data.grantSlug}/${data.questionId}`;
+          pushType = 'success';
+          break;
+        case 'grant_created':
+          pushTitle = 'New Grant Available';
+          pushMessage = `Check out the new grant: ${data.title}`;
+          pushLink = `/grants/${data.slug}`;
+          pushType = 'info';
+          break;
+      }
+
+      if (pushTitle && pushMessage) {
+        pushSuccess = await createPushNotification(supabase, data.userId, pushTitle, pushMessage, pushLink, pushType);
+      }
+    }
+
+    // Log to alerts table
+    const alertStatus = emailSuccess || smsSuccess || pushSuccess ? 
+      (emailSuccess && (!channels.sms || smsSuccess) && (!channels.push || pushSuccess) ? 'success' : 'partial') : 
+      'failed';
+
+    await supabase.from('alerts').insert({
+      event_type: type,
+      user_id: data.userId || null,
+      user_email: data.email || data.userEmail || null,
+      grant_id: data.grantId || null,
+      grant_name: data.grantName || data.title || null,
+      channel_email: channels.email && emailSuccess,
+      channel_sms: channels.sms && smsSuccess,
+      channel_push: channels.push && pushSuccess,
+      status: alertStatus,
+      error_message: errorMessage || null,
+      metadata: data,
     });
 
-    console.log('Notification sent successfully to', ADMIN_EMAIL);
+    console.log('Notification processing complete:', { 
+      emailSuccess, 
+      smsSuccess, 
+      pushSuccess, 
+      status: alertStatus 
+    });
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Notification sent' }),
+      JSON.stringify({ 
+        success: alertStatus !== 'failed', 
+        message: 'Notification processed',
+        details: {
+          email: emailSuccess,
+          sms: smsSuccess,
+          push: pushSuccess,
+        }
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error sending notification:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+    
+    // Try to log the error
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      await supabase.from('alerts').insert({
+        event_type: 'error',
+        status: 'failed',
+        error_message: errorMsg,
+        metadata: { error: errorMsg },
+      });
+    } catch (logError) {
+      console.error('Failed to log error:', logError);
+    }
+    
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMsg }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
