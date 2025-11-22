@@ -109,3 +109,73 @@ export function getTopRecommendedGrants(
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }
+
+export function calculateGrantMatchScoreWithHistory(
+  grant: any, 
+  profile: any,
+  userAnswers: any[]
+): GrantMatchScore {
+  // Start with base score
+  let matchScore = calculateGrantMatchScore(grant, profile);
+  let score = matchScore.score;
+  const matchReasons = [...matchScore.matchReasons];
+
+  // Learn from historical successful applications
+  const successfulAnswers = userAnswers.filter(a => a.outcome === 'successful');
+  
+  if (successfulAnswers.length > 0) {
+    // Extract patterns from successful grants
+    const successfulIndustries = new Set<string>();
+    const successfulAudiences = new Set<string>();
+    
+    successfulAnswers.forEach(answer => {
+      const successfulGrant = answer.grant;
+      if (successfulGrant?.industry_tags) {
+        successfulGrant.industry_tags.forEach((tag: string) => successfulIndustries.add(tag.toLowerCase()));
+      }
+      if (successfulGrant?.target_audience_tags) {
+        successfulGrant.target_audience_tags.forEach((tag: string) => successfulAudiences.add(tag.toLowerCase()));
+      }
+    });
+
+    // Boost score if this grant matches successful patterns
+    let historicalBoost = 0;
+    
+    if (grant?.industry_tags?.some((tag: string) => successfulIndustries.has(tag.toLowerCase()))) {
+      historicalBoost += 15;
+      matchReasons.push('Similar to your successful applications');
+    }
+    
+    if (grant?.target_audience_tags?.some((tag: string) => successfulAudiences.has(tag.toLowerCase()))) {
+      historicalBoost += 10;
+      if (!matchReasons.includes('Similar to your successful applications')) {
+        matchReasons.push('Matches your success profile');
+      }
+    }
+
+    score += historicalBoost;
+  }
+
+  // Penalize if similar to rejected applications
+  const rejectedAnswers = userAnswers.filter(a => a.outcome === 'rejected');
+  if (rejectedAnswers.length > 0) {
+    const rejectedIndustries = new Set<string>();
+    
+    rejectedAnswers.forEach(answer => {
+      const rejectedGrant = answer.grant;
+      if (rejectedGrant?.industry_tags) {
+        rejectedGrant.industry_tags.forEach((tag: string) => rejectedIndustries.add(tag.toLowerCase()));
+      }
+    });
+
+    if (grant?.industry_tags?.some((tag: string) => rejectedIndustries.has(tag.toLowerCase()))) {
+      score -= 10;
+    }
+  }
+
+  return {
+    grant,
+    score,
+    matchReasons
+  };
+}
