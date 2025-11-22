@@ -1,0 +1,6 @@
+{
+  "appId": "com.highspirit.grantassistant",
+  "appName": "High Spirit Grant Assistant",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
