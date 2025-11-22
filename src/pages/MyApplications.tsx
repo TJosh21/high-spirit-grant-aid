@@ -8,15 +8,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Circle, AlertCircle, FileText, Target, TrendingUp } from 'lucide-react';
+import { CheckCircle2, Circle, AlertCircle, FileText, Target, TrendingUp, Download, FileSpreadsheet } from 'lucide-react';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { EmptyState } from '@/components/EmptyState';
 import { ApplicationProgress } from '@/components/ApplicationProgress';
 import { BulkOperations } from '@/components/BulkOperations';
+import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 export default function MyApplications() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApps, setSelectedApps] = useState<any[]>([]);
@@ -91,6 +96,144 @@ export default function MyApplications() {
     }
   };
 
+  const exportToPDF = () => {
+    try {
+      const doc = new jsPDF();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let yPosition = 20;
+
+      // Title
+      doc.setFontSize(20);
+      doc.text('Grant Applications Report', 20, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(10);
+      doc.text(`Generated: ${format(new Date(), 'MMM dd, yyyy')}`, 20, yPosition);
+      yPosition += 15;
+
+      // Summary
+      doc.setFontSize(14);
+      doc.text('Summary', 20, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(10);
+      doc.text(`Total Applications: ${applications.length}`, 20, yPosition);
+      yPosition += 7;
+      doc.text(
+        `Completed: ${applications.filter((app) => app.completedQuestions === app.totalQuestions).length}`,
+        20,
+        yPosition
+      );
+      yPosition += 15;
+
+      // Applications
+      doc.setFontSize(14);
+      doc.text('Applications', 20, yPosition);
+      yPosition += 10;
+
+      applications.forEach((app, index) => {
+        if (yPosition > pageHeight - 40) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.setFontSize(12);
+        doc.text(`${index + 1}. ${app.grant.name}`, 20, yPosition);
+        yPosition += 7;
+
+        doc.setFontSize(10);
+        const progress = (app.completedQuestions / app.totalQuestions) * 100;
+        doc.text(`Progress: ${Math.round(progress)}%`, 25, yPosition);
+        yPosition += 7;
+        doc.text(`Questions: ${app.completedQuestions}/${app.totalQuestions}`, 25, yPosition);
+        yPosition += 10;
+
+        // List answers
+        app.answers.forEach((answer: any) => {
+          if (yPosition > pageHeight - 40) {
+            doc.addPage();
+            yPosition = 20;
+          }
+
+          doc.setFontSize(9);
+          const statusText = `${answer.questions.question_text.substring(0, 50)}... - ${answer.status}`;
+          doc.text(statusText, 30, yPosition);
+          yPosition += 6;
+        });
+
+        yPosition += 5;
+      });
+
+      doc.save(`grant-applications-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+
+      toast({
+        title: 'Export successful!',
+        description: 'Your applications have been exported to PDF',
+      });
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast({
+        title: 'Export failed',
+        description: 'Unable to export applications to PDF',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const exportToExcel = () => {
+    try {
+      // Prepare data for Excel
+      const excelData = applications.flatMap((app) =>
+        app.answers.map((answer: any) => ({
+          'Grant Name': app.grant.name,
+          'Grant Sponsor': app.grant.sponsor_name,
+          'Deadline': app.grant.deadline ? format(new Date(app.grant.deadline), 'MMM dd, yyyy') : 'N/A',
+          'Question': answer.questions.question_text,
+          'Status': answer.status,
+          'Word Count': answer.user_rough_answer ? answer.user_rough_answer.split(/\s+/).length : 0,
+          'Quality Score': answer.quality_score || 'N/A',
+          'Success Score': answer.success_score || 'N/A',
+          'Last Updated': answer.last_updated_at
+            ? format(new Date(answer.last_updated_at), 'MMM dd, yyyy HH:mm')
+            : 'N/A',
+        }))
+      );
+
+      // Create workbook and worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Applications');
+
+      // Auto-size columns
+      const maxWidth = 50;
+      const colWidths = Object.keys(excelData[0] || {}).map((key) => ({
+        wch: Math.min(
+          maxWidth,
+          Math.max(
+            key.length,
+            ...excelData.map((row: any) => String(row[key] || '').length)
+          )
+        ),
+      }));
+      ws['!cols'] = colWidths;
+
+      // Save file
+      XLSX.writeFile(wb, `grant-applications-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+
+      toast({
+        title: 'Export successful!',
+        description: 'Your applications have been exported to Excel',
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast({
+        title: 'Export failed',
+        description: 'Unable to export applications to Excel',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return <LoadingScreen />;
   }
@@ -106,11 +249,34 @@ export default function MyApplications() {
       />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">My Applications</h1>
-          <p className="text-muted-foreground text-base md:text-lg">
-            Track your progress on grant applications
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">My Applications</h1>
+            <p className="text-muted-foreground text-base md:text-lg">
+              Track your progress on grant applications
+            </p>
+          </div>
+          
+          {applications.length > 0 && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={exportToPDF}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export PDF
+              </Button>
+              <Button
+                variant="outline"
+                onClick={exportToExcel}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Export Excel
+              </Button>
+            </div>
+          )}
         </div>
 
         {applications.length > 0 && (
