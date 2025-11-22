@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Circle, AlertCircle, FileText, Target, TrendingUp } from 'lucide-react';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { EmptyState } from '@/components/EmptyState';
+import { ApplicationProgress } from '@/components/ApplicationProgress';
 
 export default function MyApplications() {
   const { user } = useAuth();
@@ -154,70 +155,37 @@ export default function MyApplications() {
         {applications.length > 0 ? (
           <div className="space-y-6">
             {applications.map((app) => {
-              const progress = app.totalQuestions > 0 ? (app.completedQuestions / app.totalQuestions) * 100 : 0;
+              const answeredQuestions = app.answers.filter((a: any) => a.status !== 'not_started').length;
               
               return (
-                <Card key={app.grant.id} className="shadow-card hover:shadow-card-hover transition-all">
-                  <CardHeader className="pb-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <Link to={`/grants/${app.grant.slug}`}>
-                          <CardTitle className="text-xl md:text-2xl hover:text-primary transition-colors mb-2 break-words">
-                            {app.grant.name}
-                          </CardTitle>
-                        </Link>
-                        <CardDescription className="text-sm md:text-base mb-2">
-                          {app.grant.short_description}
-                        </CardDescription>
-                        {app.grant.amount_min && app.grant.amount_max && (
-                          <p className="text-accent font-bold text-base md:text-lg mt-2">
-                            ${app.grant.amount_min.toLocaleString()} - ${app.grant.amount_max.toLocaleString()}
-                          </p>
-                        )}
-                      </div>
-                      <Badge 
-                        variant={progress === 100 ? "default" : "outline"} 
-                        className={`${progress === 100 ? 'bg-accent text-accent-foreground' : ''} gap-2 px-3 py-1 whitespace-nowrap self-start sm:self-auto`}
+                <div key={app.grant.id} className="space-y-4">
+                  <ApplicationProgress
+                    grantName={app.grant.name}
+                    totalQuestions={app.totalQuestions}
+                    answeredQuestions={answeredQuestions}
+                    readyQuestions={app.completedQuestions}
+                    deadline={app.grant.deadline}
+                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {app.answers.map((answer: any, index: number) => (
+                      <Link
+                        key={answer.id}
+                        to={`/answer/${app.grant.slug}/${answer.question_id}`}
+                        className="flex items-start gap-3 rounded-xl border border-border p-3 md:p-4 transition-all hover:bg-secondary hover:shadow-card"
                       >
-                        {app.completedQuestions} of {app.totalQuestions}
-                      </Badge>
-                    </div>
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs md:text-sm font-medium text-muted-foreground">Progress</span>
-                        <span className="text-xs md:text-sm font-bold text-primary">{Math.round(progress)}%</span>
-                      </div>
-                      <Progress 
-                        value={progress} 
-                        className="h-2.5 md:h-3"
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <p className="text-xs md:text-sm font-semibold text-primary uppercase tracking-wide">Questions:</p>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {app.answers.map((answer: any, index: number) => (
-                          <Link
-                            key={answer.id}
-                            to={`/answer/${app.grant.slug}/${answer.question_id}`}
-                            className="flex items-start gap-3 rounded-xl border border-border p-3 md:p-4 transition-all hover:bg-secondary hover:shadow-card"
-                          >
-                            <div className="flex-shrink-0 mt-0.5">
-                              {getStatusIcon(answer.status)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-muted-foreground mb-1">Question {index + 1}</p>
-                              <p className="line-clamp-2 text-xs md:text-sm font-medium text-foreground">
-                                {answer.question_text_snapshot}
-                              </p>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                        <div className="flex-shrink-0 mt-0.5">
+                          {getStatusIcon(answer.status)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground mb-1">Question {index + 1}</p>
+                          <p className="line-clamp-2 text-xs md:text-sm font-medium text-foreground">
+                            {answer.question_text_snapshot}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               );
             })}
           </div>

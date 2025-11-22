@@ -12,6 +12,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { EmptyState } from '@/components/EmptyState';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { motion } from 'framer-motion';
+import { GrantCalendar } from '@/components/GrantCalendar';
 
 export default function Home() {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ export default function Home() {
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({ total: 0, ready: 0 });
   const [recommendedGrants, setRecommendedGrants] = useState<any[]>([]);
+  const [allGrants, setAllGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -63,9 +65,12 @@ export default function Home() {
         .select('*')
         .eq('status', 'open');
 
-      if (grants && profileData) {
-        const recommended = getTopRecommendedGrants(grants, profileData, 3);
-        setRecommendedGrants(recommended);
+      if (grants) {
+        setAllGrants(grants);
+        if (profileData) {
+          const recommended = getTopRecommendedGrants(grants, profileData, 3);
+          setRecommendedGrants(recommended);
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -189,8 +194,17 @@ export default function Home() {
           </div>
         </ScrollReveal>
 
+        {/* Grant Calendar */}
+        {allGrants.length > 0 && (
+          <ScrollReveal delay={0.2}>
+            <div className="mb-10">
+              <GrantCalendar grants={allGrants} />
+            </div>
+          </ScrollReveal>
+        )}
+
         {/* Recommended Grants */}
-        <ScrollReveal delay={0.2}>
+        <ScrollReveal delay={0.3}>
           <div className="mb-10">
           <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b-2 border-accent/50">
             <div>
@@ -267,7 +281,7 @@ export default function Home() {
         </ScrollReveal>
 
         {/* Quick Actions */}
-        <ScrollReveal delay={0.3}>
+        <ScrollReveal delay={0.4}>
           <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
           <Link to="/grants">
             <Card className="transition-all hover:shadow-card-hover shadow-card h-full">

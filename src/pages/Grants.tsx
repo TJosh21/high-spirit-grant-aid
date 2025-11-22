@@ -1,415 +1,441 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Navigation } from '@/components/Navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Filter, X, ChevronDown } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { LoadingScreen } from '@/components/LoadingScreen';
-import { EmptyState } from '@/components/EmptyState';
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { DollarSign, Calendar, Building2, MapPin, Filter, X, Save, Trash2 } from "lucide-react";
+import { format, isWithinInterval, addDays } from "date-fns";
+import { LoadingScreen } from "@/components/LoadingScreen";
+import { EmptyState } from "@/components/EmptyState";
+import { PageTransition } from "@/components/PageTransition";
+import { ScrollReveal } from "@/components/ScrollReveal";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { toast } from "@/hooks/use-toast";
+import { Navigation } from "@/components/Navigation";
+
+interface FilterPreset {
+  name: string;
+  filters: {
+    searchQuery: string;
+    deadlineProximity: string;
+    minAmount: string;
+    maxAmount: string;
+    industries: string[];
+  };
+}
 
 export default function Grants() {
-  const navigate = useNavigate();
-  const [grants, setGrants] = useState<any[]>([]);
-  const [filteredGrants, setFilteredGrants] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [filterOpen, setFilterOpen] = useState(false);
-  
-  // Filter states
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [amountRange, setAmountRange] = useState<[number, number]>([0, 500000]);
-  const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>([]);
-  const [deadlineFilter, setDeadlineFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('newest');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deadlineProximity, setDeadlineProximity] = useState<string>("all");
+  const [minAmount, setMinAmount] = useState<string>("");
+  const [maxAmount, setMaxAmount] = useState<string>("");
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+  const [filterPresets, setFilterPresets] = useState<FilterPreset[]>(() => {
+    const saved = localStorage.getItem('grantFilterPresets');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [presetName, setPresetName] = useState("");
 
-  useEffect(() => {
-    loadGrants();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [searchQuery, grants, selectedCategories, amountRange, selectedBusinessTypes, deadlineFilter, sortBy]);
-
-  const applyFilters = () => {
-    let filtered = [...grants];
-
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (grant) =>
-          grant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          grant.short_description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          grant.sponsor_name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Category filter
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((grant) =>
-        selectedCategories.some(category => 
-          grant.industry_tags?.some((tag: string) => tag.toLowerCase().includes(category.toLowerCase())) ||
-          grant.target_audience_tags?.some((tag: string) => tag.toLowerCase().includes(category.toLowerCase()))
-        )
-      );
-    }
-
-    // Amount range filter
-    filtered = filtered.filter((grant) => {
-      if (!grant.amount_min && !grant.amount_max) return true;
-      const min = grant.amount_min || 0;
-      const max = grant.amount_max || 1000000;
-      return min <= amountRange[1] && max >= amountRange[0];
-    });
-
-    // Business type filter
-    if (selectedBusinessTypes.length > 0) {
-      filtered = filtered.filter((grant) =>
-        selectedBusinessTypes.some(type =>
-          grant.target_audience_tags?.some((tag: string) => tag.toLowerCase().includes(type.toLowerCase()))
-        )
-      );
-    }
-
-    // Deadline filter
-    const now = new Date();
-    if (deadlineFilter === 'this-month') {
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      filtered = filtered.filter((grant) => {
-        if (!grant.deadline) return false;
-        const deadline = new Date(grant.deadline);
-        return deadline <= endOfMonth && deadline >= now;
-      });
-    } else if (deadlineFilter === 'next-3-months') {
-      const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
-      filtered = filtered.filter((grant) => {
-        if (!grant.deadline) return false;
-        const deadline = new Date(grant.deadline);
-        return deadline <= threeMonthsLater && deadline >= now;
-      });
-    } else if (deadlineFilter === 'has-deadline') {
-      filtered = filtered.filter((grant) => grant.deadline);
-    }
-
-    // Sort
-    if (sortBy === 'amount-high') {
-      filtered.sort((a, b) => (b.amount_max || 0) - (a.amount_max || 0));
-    } else if (sortBy === 'amount-low') {
-      filtered.sort((a, b) => (a.amount_min || 0) - (b.amount_min || 0));
-    } else if (sortBy === 'deadline') {
-      filtered.sort((a, b) => {
-        if (!a.deadline) return 1;
-        if (!b.deadline) return -1;
-        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      });
-    } else {
-      // newest
-      filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }
-
-    setFilteredGrants(filtered);
-  };
-
-  const clearFilters = () => {
-    setSelectedCategories([]);
-    setAmountRange([0, 500000]);
-    setSelectedBusinessTypes([]);
-    setDeadlineFilter('all');
-    setSearchQuery('');
-  };
-
-  const activeFiltersCount = 
-    selectedCategories.length + 
-    selectedBusinessTypes.length + 
-    (deadlineFilter !== 'all' ? 1 : 0) +
-    (amountRange[0] !== 0 || amountRange[1] !== 500000 ? 1 : 0);
-
-  const loadGrants = async () => {
-    try {
-      const { data } = await supabase
+  const { data: grants, isLoading } = useQuery({
+    queryKey: ['grants'],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('grants')
         .select('*')
         .eq('status', 'open')
         .order('created_at', { ascending: false });
-
-      setGrants(data || []);
-      setFilteredGrants(data || []);
-    } catch (error) {
-      console.error('Error loading grants:', error);
-    } finally {
-      setLoading(false);
+      
+      if (error) throw error;
+      return data || [];
     }
+  });
+
+  // Get unique industries from all grants
+  const allIndustries = useMemo(() => {
+    if (!grants) return [];
+    const industries = new Set<string>();
+    grants.forEach(grant => {
+      grant.industry_tags?.forEach((tag: string) => industries.add(tag));
+    });
+    return Array.from(industries).sort();
+  }, [grants]);
+
+  // Apply filters
+  const filteredGrants = useMemo(() => {
+    if (!grants) return [];
+
+    return grants.filter(grant => {
+      // Search filter
+      const matchesSearch = searchQuery === "" || 
+        grant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        grant.short_description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Deadline proximity filter
+      let matchesDeadline = true;
+      if (deadlineProximity !== "all" && grant.deadline) {
+        const deadline = new Date(grant.deadline);
+        const today = new Date();
+        
+        if (deadlineProximity === "7days") {
+          matchesDeadline = isWithinInterval(deadline, { start: today, end: addDays(today, 7) });
+        } else if (deadlineProximity === "30days") {
+          matchesDeadline = isWithinInterval(deadline, { start: today, end: addDays(today, 30) });
+        } else if (deadlineProximity === "90days") {
+          matchesDeadline = isWithinInterval(deadline, { start: today, end: addDays(today, 90) });
+        }
+      }
+
+      // Amount filter
+      const matchesAmount = 
+        (minAmount === "" || (grant.amount_max && grant.amount_max >= parseInt(minAmount))) &&
+        (maxAmount === "" || (grant.amount_min && grant.amount_min <= parseInt(maxAmount)));
+
+      // Industry filter
+      const matchesIndustry = selectedIndustries.length === 0 ||
+        selectedIndustries.some(industry => grant.industry_tags?.includes(industry));
+
+      return matchesSearch && matchesDeadline && matchesAmount && matchesIndustry;
+    });
+  }, [grants, searchQuery, deadlineProximity, minAmount, maxAmount, selectedIndustries]);
+
+  const saveFilterPreset = () => {
+    if (!presetName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a name for the filter preset",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newPreset: FilterPreset = {
+      name: presetName,
+      filters: {
+        searchQuery,
+        deadlineProximity,
+        minAmount,
+        maxAmount,
+        industries: selectedIndustries
+      }
+    };
+
+    const updatedPresets = [...filterPresets, newPreset];
+    setFilterPresets(updatedPresets);
+    localStorage.setItem('grantFilterPresets', JSON.stringify(updatedPresets));
+    setPresetName("");
+    
+    toast({
+      title: "Filter preset saved",
+      description: `"${presetName}" has been saved successfully`
+    });
   };
 
-  return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="mb-8">
-          <h1 className="mb-3 text-3xl md:text-4xl font-bold text-primary font-display">Available Grants</h1>
-          <p className="text-base md:text-lg text-muted-foreground">
-            Discover funding opportunities tailored for your business
-          </p>
-        </div>
+  const loadFilterPreset = (preset: FilterPreset) => {
+    setSearchQuery(preset.filters.searchQuery);
+    setDeadlineProximity(preset.filters.deadlineProximity);
+    setMinAmount(preset.filters.minAmount);
+    setMaxAmount(preset.filters.maxAmount);
+    setSelectedIndustries(preset.filters.industries);
+    
+    toast({
+      title: "Filter preset loaded",
+      description: `Loaded "${preset.name}"`
+    });
+  };
 
-        {/* Search and Filter */}
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+  const deleteFilterPreset = (index: number) => {
+    const updatedPresets = filterPresets.filter((_, i) => i !== index);
+    setFilterPresets(updatedPresets);
+    localStorage.setItem('grantFilterPresets', JSON.stringify(updatedPresets));
+    
+    toast({
+      title: "Filter preset deleted",
+      description: "The filter preset has been removed"
+    });
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setDeadlineProximity("all");
+    setMinAmount("");
+    setMaxAmount("");
+    setSelectedIndustries([]);
+  };
+
+  const activeFilterCount = [
+    searchQuery !== "",
+    deadlineProximity !== "all",
+    minAmount !== "",
+    maxAmount !== "",
+    selectedIndustries.length > 0
+  ].filter(Boolean).length;
+
+  return (
+    <PageTransition>
+      <div className="min-h-screen bg-background pb-20 md:pb-0">
+        <Navigation />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <ScrollReveal>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-4">Available Grants</h1>
+              <p className="text-lg text-muted-foreground">
+                Discover funding opportunities for your business
+              </p>
+            </div>
+          </ScrollReveal>
+
+          {/* Search and Filter Bar */}
+          <div className="mb-6 flex gap-4">
+            <div className="flex-1">
               <Input
-                placeholder="Search grants by name, description, or sponsor..."
+                type="text"
+                placeholder="Search grants..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-14 text-base"
+                className="w-full"
               />
             </div>
-            <div className="flex gap-2">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px] h-14">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="amount-high">Highest Amount</SelectItem>
-                  <SelectItem value="amount-low">Lowest Amount</SelectItem>
-                  <SelectItem value="deadline">Deadline Soon</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="lg" className="gap-2">
-                    <Filter className="h-5 w-5" />
-                    Filters
-                    {activeFiltersCount > 0 && (
-                      <Badge variant="default" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                        {activeFiltersCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Filter Grants</SheetTitle>
-                    <SheetDescription>
-                      Refine your search to find the perfect funding opportunity
-                    </SheetDescription>
-                  </SheetHeader>
-                  
-                  <div className="mt-6 space-y-6">
-                    {/* Category Filter */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Categories</Label>
-                      <div className="space-y-2">
-                        {['Technology', 'Healthcare', 'Education', 'Manufacturing', 'Retail', 'Agriculture'].map((category) => (
-                          <div key={category} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={category}
-                              checked={selectedCategories.includes(category)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedCategories([...selectedCategories, category]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(c => c !== category));
-                                }
-                              }}
-                            />
-                            <label htmlFor={category} className="text-sm cursor-pointer">
-                              {category}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+            
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="relative">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Advanced Filters</SheetTitle>
+                </SheetHeader>
+                
+                <div className="space-y-6 mt-6">
+                  {/* Deadline Proximity */}
+                  <div className="space-y-2">
+                    <Label>Deadline Proximity</Label>
+                    <Select value={deadlineProximity} onValueChange={setDeadlineProximity}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Deadlines</SelectItem>
+                        <SelectItem value="7days">Next 7 Days</SelectItem>
+                        <SelectItem value="30days">Next 30 Days</SelectItem>
+                        <SelectItem value="90days">Next 90 Days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                    {/* Business Type Filter */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Business Type</Label>
-                      <div className="space-y-2">
-                        {['Women-Owned', 'Minority-Owned', 'Startup', 'Small Business', 'Veteran-Owned'].map((type) => (
-                          <div key={type} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={type}
-                              checked={selectedBusinessTypes.includes(type)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedBusinessTypes([...selectedBusinessTypes, type]);
-                                } else {
-                                  setSelectedBusinessTypes(selectedBusinessTypes.filter(t => t !== type));
-                                }
-                              }}
-                            />
-                            <label htmlFor={type} className="text-sm cursor-pointer">
-                              {type}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                  {/* Funding Amount Range */}
+                  <div className="space-y-2">
+                    <Label>Funding Amount Range</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Min"
+                        value={minAmount}
+                        onChange={(e) => setMinAmount(e.target.value)}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Max"
+                        value={maxAmount}
+                        onChange={(e) => setMaxAmount(e.target.value)}
+                      />
                     </div>
+                  </div>
 
-                    {/* Amount Range */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Grant Amount Range</Label>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>${amountRange[0].toLocaleString()}</span>
-                          <span>${amountRange[1].toLocaleString()}</span>
+                  {/* Industry Categories */}
+                  <div className="space-y-2">
+                    <Label>Industry Categories</Label>
+                    <div className="border rounded-lg p-3 max-h-[200px] overflow-y-auto space-y-2">
+                      {allIndustries.map((industry) => (
+                        <div key={industry} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={industry}
+                            checked={selectedIndustries.includes(industry)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIndustries([...selectedIndustries, industry]);
+                              } else {
+                                setSelectedIndustries(selectedIndustries.filter(i => i !== industry));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <label htmlFor={industry} className="text-sm cursor-pointer">
+                            {industry}
+                          </label>
                         </div>
-                        <Slider
-                          value={amountRange}
-                          onValueChange={(value) => setAmountRange(value as [number, number])}
-                          max={500000}
-                          min={0}
-                          step={10000}
-                          className="w-full"
-                        />
-                      </div>
+                      ))}
                     </div>
+                  </div>
 
-                    {/* Deadline Filter */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Deadline</Label>
-                      <Select value={deadlineFilter} onValueChange={setDeadlineFilter}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Grants</SelectItem>
-                          <SelectItem value="this-month">Closing This Month</SelectItem>
-                          <SelectItem value="next-3-months">Next 3 Months</SelectItem>
-                          <SelectItem value="has-deadline">Has Deadline</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex gap-2 pt-4">
-                      <Button onClick={clearFilters} variant="outline" className="flex-1">
-                        Clear All
-                      </Button>
-                      <Button onClick={() => setFilterOpen(false)} className="flex-1">
-                        Apply Filters
+                  {/* Filter Presets */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label>Save Current Filters</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Preset name"
+                        value={presetName}
+                        onChange={(e) => setPresetName(e.target.value)}
+                      />
+                      <Button onClick={saveFilterPreset} size="sm">
+                        <Save className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+
+                  {filterPresets.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Saved Presets</Label>
+                      <div className="space-y-2">
+                        {filterPresets.map((preset, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 border rounded-lg">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex-1 justify-start"
+                              onClick={() => loadFilterPreset(preset)}
+                            >
+                              {preset.name}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteFilterPreset(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Button variant="outline" className="w-full" onClick={clearAllFilters}>
+                    <X className="h-4 w-4 mr-2" />
+                    Clear All Filters
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           {/* Active Filters Display */}
-          {activeFiltersCount > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {selectedCategories.map((category) => (
-                <Badge key={category} variant="secondary" className="gap-1">
-                  {category}
+          {activeFilterCount > 0 && (
+            <div className="mb-6 flex flex-wrap gap-2">
+              {searchQuery && (
+                <Badge variant="secondary">
+                  Search: {searchQuery}
+                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setSearchQuery("")} />
+                </Badge>
+              )}
+              {deadlineProximity !== "all" && (
+                <Badge variant="secondary">
+                  Deadline: {deadlineProximity}
+                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setDeadlineProximity("all")} />
+                </Badge>
+              )}
+              {minAmount && (
+                <Badge variant="secondary">
+                  Min: ${parseInt(minAmount).toLocaleString()}
+                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setMinAmount("")} />
+                </Badge>
+              )}
+              {maxAmount && (
+                <Badge variant="secondary">
+                  Max: ${parseInt(maxAmount).toLocaleString()}
+                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setMaxAmount("")} />
+                </Badge>
+              )}
+              {selectedIndustries.map((industry) => (
+                <Badge key={industry} variant="secondary">
+                  {industry}
                   <X 
-                    className="h-3 w-3 cursor-pointer" 
-                    onClick={() => setSelectedCategories(selectedCategories.filter(c => c !== category))}
+                    className="h-3 w-3 ml-1 cursor-pointer" 
+                    onClick={() => setSelectedIndustries(selectedIndustries.filter(i => i !== industry))} 
                   />
                 </Badge>
               ))}
-              {selectedBusinessTypes.map((type) => (
-                <Badge key={type} variant="secondary" className="gap-1">
-                  {type}
-                  <X 
-                    className="h-3 w-3 cursor-pointer" 
-                    onClick={() => setSelectedBusinessTypes(selectedBusinessTypes.filter(t => t !== type))}
-                  />
-                </Badge>
-              ))}
-              {deadlineFilter !== 'all' && (
-                <Badge variant="secondary" className="gap-1">
-                  {deadlineFilter === 'this-month' ? 'This Month' : deadlineFilter === 'next-3-months' ? 'Next 3 Months' : 'Has Deadline'}
-                  <X 
-                    className="h-3 w-3 cursor-pointer" 
-                    onClick={() => setDeadlineFilter('all')}
-                  />
-                </Badge>
-              )}
-              {(amountRange[0] !== 0 || amountRange[1] !== 500000) && (
-                <Badge variant="secondary" className="gap-1">
-                  ${amountRange[0].toLocaleString()} - ${amountRange[1].toLocaleString()}
-                  <X 
-                    className="h-3 w-3 cursor-pointer" 
-                    onClick={() => setAmountRange([0, 500000])}
-                  />
-                </Badge>
-              )}
             </div>
           )}
-        </div>
 
-        {/* Grants List */}
-        {loading ? (
-          <LoadingScreen />
-        ) : filteredGrants.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredGrants.map((grant) => (
-              <Link key={grant.id} to={`/grants/${grant.slug}`}>
-                <Card className="h-full transition-all hover:shadow-premium border-border shadow-card">
-                  <CardHeader className="pb-4">
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      {grant.target_audience_tags?.slice(0, 2).map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
+          {/* Grants List */}
+          {isLoading ? (
+            <LoadingScreen />
+          ) : filteredGrants.length === 0 ? (
+            <EmptyState
+              icon={Filter}
+              title="No grants match your filters"
+              description="Try adjusting your filters to see more results"
+              actionLabel="Clear Filters"
+              onAction={clearAllFilters}
+            />
+          ) : (
+            <ScrollReveal>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredGrants.map((grant) => (
+                  <Card key={grant.id} className="hover:shadow-premium transition-all">
+                    <CardHeader>
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge variant="outline">
+                          {grant.sponsor_type || 'Grant'}
                         </Badge>
-                      ))}
-                      {grant.status === 'open' && (
-                        <Badge variant="gold" className="text-xs font-semibold">Open Now</Badge>
-                      )}
-                    </div>
-                    <CardTitle className="line-clamp-2 text-lg md:text-xl mb-2">{grant.name}</CardTitle>
-                    <CardDescription className="line-clamp-2 text-sm md:text-base">
-                      {grant.short_description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2 text-sm md:text-base">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-bold text-accent text-right">
-                          {grant.amount_min && grant.amount_max
-                            ? `$${grant.amount_min.toLocaleString()} - $${grant.amount_max.toLocaleString()}`
-                            : 'Varies'}
-                        </span>
+                        {grant.deadline && (
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {format(new Date(grant.deadline), 'MMM dd')}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-muted-foreground">Sponsor:</span>
-                        <span className="font-medium text-right">{grant.sponsor_name}</span>
+                      <CardTitle className="line-clamp-2">{grant.name}</CardTitle>
+                      <CardDescription className="line-clamp-2">
+                        {grant.short_description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {grant.amount_max && (
+                          <div className="flex items-center text-sm">
+                            <DollarSign className="h-4 w-4 mr-2 text-primary" />
+                            <span className="font-semibold text-primary">
+                              Up to {grant.currency || 'USD'} {grant.amount_max.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        {grant.industry_tags && grant.industry_tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {grant.industry_tags.slice(0, 2).map((tag: string, i: number) => (
+                              <Badge key={i} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        <Button asChild className="w-full">
+                          <Link to={`/grants/${grant.slug}`}>View Details</Link>
+                        </Button>
                       </div>
-                      {grant.deadline && (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-muted-foreground">Deadline:</span>
-                          <span className="font-medium text-right">
-                            {new Date(grant.deadline).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={Search}
-            title={searchQuery ? 'No grants found' : 'No grants available'}
-            description={searchQuery ? 'Try adjusting your search terms or filters to find more opportunities' : 'Check back soon for new funding opportunities'}
-            actionLabel={searchQuery ? 'Clear Search' : undefined}
-            onAction={searchQuery ? () => setSearchQuery('') : undefined}
-          />
-        )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollReveal>
+          )}
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
