@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Bell, Mail } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -18,6 +19,13 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    email_deadline_reminders: true,
+    email_status_updates: true,
+    email_new_grants: false,
+    push_deadline_reminders: true,
+    push_status_updates: true,
+  });
 
   const industries = [
     'Technology',
@@ -55,6 +63,12 @@ export default function Profile() {
         .single();
 
       setProfile(data);
+
+      // Load notification preferences from localStorage
+      const savedPrefs = localStorage.getItem('notificationPreferences');
+      if (savedPrefs) {
+        setNotificationPrefs(JSON.parse(savedPrefs));
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -71,6 +85,9 @@ export default function Profile() {
         .eq('id', user?.id);
 
       if (error) throw error;
+
+      // Save notification preferences to localStorage
+      localStorage.setItem('notificationPreferences', JSON.stringify(notificationPrefs));
 
       toast({
         title: 'Profile updated!',
@@ -254,11 +271,105 @@ export default function Profile() {
               </div>
             </div>
 
+            <Separator className="my-6" />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Notification Preferences</h3>
+                  <p className="text-sm text-muted-foreground">Manage how you receive updates</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pl-2">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-base font-medium">Email Notifications</Label>
+                  </div>
+                  <div className="space-y-3 pl-6">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="email_deadline_reminders"
+                        checked={notificationPrefs.email_deadline_reminders}
+                        onCheckedChange={(checked) =>
+                          setNotificationPrefs({ ...notificationPrefs, email_deadline_reminders: !!checked })
+                        }
+                      />
+                      <label htmlFor="email_deadline_reminders" className="text-sm cursor-pointer">
+                        Grant deadline reminders (3 days before)
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="email_status_updates"
+                        checked={notificationPrefs.email_status_updates}
+                        onCheckedChange={(checked) =>
+                          setNotificationPrefs({ ...notificationPrefs, email_status_updates: !!checked })
+                        }
+                      />
+                      <label htmlFor="email_status_updates" className="text-sm cursor-pointer">
+                        Application status updates
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="email_new_grants"
+                        checked={notificationPrefs.email_new_grants}
+                        onCheckedChange={(checked) =>
+                          setNotificationPrefs({ ...notificationPrefs, email_new_grants: !!checked })
+                        }
+                      />
+                      <label htmlFor="email_new_grants" className="text-sm cursor-pointer">
+                        New grant opportunities matching your profile
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-base font-medium">Push Notifications</Label>
+                  </div>
+                  <div className="space-y-3 pl-6">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="push_deadline_reminders"
+                        checked={notificationPrefs.push_deadline_reminders}
+                        onCheckedChange={(checked) =>
+                          setNotificationPrefs({ ...notificationPrefs, push_deadline_reminders: !!checked })
+                        }
+                      />
+                      <label htmlFor="push_deadline_reminders" className="text-sm cursor-pointer">
+                        Grant deadline reminders
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="push_status_updates"
+                        checked={notificationPrefs.push_status_updates}
+                        onCheckedChange={(checked) =>
+                          setNotificationPrefs({ ...notificationPrefs, push_status_updates: !!checked })
+                        }
+                      />
+                      <label htmlFor="push_status_updates" className="text-sm cursor-pointer">
+                        Application status updates
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <Button
               onClick={handleSave}
               disabled={saving}
               size="lg"
-              className="w-full"
+              className="w-full mt-6"
             >
               {saving ? (
                 <>

@@ -10,7 +10,7 @@ import { MobileApp } from "@/mobile/MobileApp";
 import { Footer } from "@/components/Footer";
 import { PageTransition } from "@/components/PageTransition";
 import { OnboardingTour } from "@/components/OnboardingTour";
-import { useGrantNotification } from "@/hooks/useGrantNotification";
+import { useGrantNotifications } from "@/hooks/useGrantNotifications";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
@@ -29,7 +29,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppContent() {
-  useGrantNotification();
+  useGrantNotifications();
   useRealtimeNotifications();
   
   return (
