@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: 'High Spirit Grant Assistant',
   webDir: 'dist',
   
-  // PRODUCTION DEPLOYMENT: 
-  // After deploying, update this URL to your production domain
+  // PRODUCTION CONFIGURATION
+  // This points to your live Lovable app
   server: {
     url: 'https://68d3aecb-93c8-4e4e-898d-3882414185c4.lovableproject.com?forceHideBadge=true',
     cleartext: true,
