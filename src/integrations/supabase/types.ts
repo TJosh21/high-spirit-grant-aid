@@ -252,6 +252,66 @@ export type Database = {
           },
         ]
       }
+      answer_inline_comments: {
+        Row: {
+          answer_id: string
+          comment_text: string
+          created_at: string | null
+          end_position: number | null
+          id: string
+          mentioned_users: string[] | null
+          parent_comment_id: string | null
+          resolved: boolean | null
+          section: string
+          start_position: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          answer_id: string
+          comment_text: string
+          created_at?: string | null
+          end_position?: number | null
+          id?: string
+          mentioned_users?: string[] | null
+          parent_comment_id?: string | null
+          resolved?: boolean | null
+          section: string
+          start_position?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          answer_id?: string
+          comment_text?: string
+          created_at?: string | null
+          end_position?: number | null
+          id?: string
+          mentioned_users?: string[] | null
+          parent_comment_id?: string | null
+          resolved?: boolean | null
+          section?: string
+          start_position?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_inline_comments_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_inline_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "answer_inline_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       answer_versions: {
         Row: {
           ai_polished_answer: string | null
@@ -300,6 +360,7 @@ export type Database = {
         Row: {
           ai_clarification: string | null
           ai_polished_answer: string | null
+          completeness_score: number | null
           created_at: string | null
           docusign_envelope_id: string | null
           estimated_completion_minutes: number | null
@@ -309,9 +370,13 @@ export type Database = {
           last_updated_at: string | null
           organization_id: string | null
           outcome: string | null
+          predicted_success_percentage: number | null
+          quality_score: number | null
           question_id: string
           question_text_snapshot: string
+          source_document_id: string | null
           status: Database["public"]["Enums"]["answer_status"] | null
+          success_score: number | null
           user_clarification: string | null
           user_id: string
           user_rough_answer: string | null
@@ -319,6 +384,7 @@ export type Database = {
         Insert: {
           ai_clarification?: string | null
           ai_polished_answer?: string | null
+          completeness_score?: number | null
           created_at?: string | null
           docusign_envelope_id?: string | null
           estimated_completion_minutes?: number | null
@@ -328,9 +394,13 @@ export type Database = {
           last_updated_at?: string | null
           organization_id?: string | null
           outcome?: string | null
+          predicted_success_percentage?: number | null
+          quality_score?: number | null
           question_id: string
           question_text_snapshot: string
+          source_document_id?: string | null
           status?: Database["public"]["Enums"]["answer_status"] | null
+          success_score?: number | null
           user_clarification?: string | null
           user_id: string
           user_rough_answer?: string | null
@@ -338,6 +408,7 @@ export type Database = {
         Update: {
           ai_clarification?: string | null
           ai_polished_answer?: string | null
+          completeness_score?: number | null
           created_at?: string | null
           docusign_envelope_id?: string | null
           estimated_completion_minutes?: number | null
@@ -347,9 +418,13 @@ export type Database = {
           last_updated_at?: string | null
           organization_id?: string | null
           outcome?: string | null
+          predicted_success_percentage?: number | null
+          quality_score?: number | null
           question_id?: string
           question_text_snapshot?: string
+          source_document_id?: string | null
           status?: Database["public"]["Enums"]["answer_status"] | null
+          success_score?: number | null
           user_clarification?: string | null
           user_id?: string
           user_rough_answer?: string | null
@@ -377,6 +452,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      application_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          industry: string | null
+          template_data: Json
+          title: string
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          template_data: Json
+          title: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          template_data?: Json
+          title?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       business_documents: {
         Row: {

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save, MessageSquare, Clock, CheckSquare, History, FileSignature, Brain } from 'lucide-react';
+import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save, MessageSquare, Clock, CheckSquare, History, FileSignature, Brain, FileUp, Trophy } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ApplicationTimeline } from '@/components/ApplicationTimeline';
@@ -17,6 +17,10 @@ import { AnswerComments } from '@/components/AnswerComments';
 import { TaskManager } from '@/components/TaskManager';
 import { VersionHistory } from '@/components/VersionHistory';
 import { PresenceIndicator } from '@/components/PresenceIndicator';
+import { DocumentParser } from '@/components/DocumentParser';
+import { ApplicationScoreCard } from '@/components/ApplicationScoreCard';
+import { InlineComments } from '@/components/InlineComments';
+import { TemplateSelector } from '@/components/TemplateSelector';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -432,11 +436,51 @@ export default function Answer() {
           </TabsList>
 
           <TabsContent value="answer" className="space-y-6">
+            {/* Smart Templates */}
+            <TemplateSelector
+              questions={[question]}
+              grantId={grant?.id}
+              onTemplateApplied={(templateAnswers) => {
+                const match = templateAnswers.find((ta: any) => ta.questionId === question.id);
+                if (match && match.templateAnswer) {
+                  setUserRoughAnswer(match.templateAnswer);
+                  toast({
+                    title: 'Template applied!',
+                    description: match.tips || 'Answer pre-filled with template',
+                  });
+                }
+              }}
+            />
 
-        <Card className="mb-6 shadow-card">
+            {/* Document Parser */}
+            <DocumentParser 
+              questions={[question]} 
+              onAnswersExtracted={(matches) => {
+                const match = matches.find(m => m.questionId === question.id);
+                if (match && match.extractedAnswer) {
+                  setUserRoughAnswer(match.extractedAnswer);
+                  toast({
+                    title: 'Answer imported!',
+                    description: `Extracted with ${match.confidence}% confidence`,
+                  });
+                }
+              }}
+            />
+
+            {/* Success Prediction Score */}
+            {answer && (
+              <ApplicationScoreCard answerId={answer.id} />
+            )}
+
+         <Card className="mb-6 shadow-card">
           <CardHeader>
-            <CardTitle className="text-xl">Your Rough Answer</CardTitle>
-            <CardDescription className="text-base">Write your thoughts naturally - our AI will polish it into a professional grant response</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl">Your Rough Answer</CardTitle>
+                <CardDescription className="text-base">Write your thoughts naturally - our AI will polish it into a professional grant response</CardDescription>
+              </div>
+              <InlineComments answerId={answer?.id} section="rough_answer" />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="relative">
@@ -563,40 +607,45 @@ export default function Answer() {
           <Card className="shadow-premium border-accent/30">
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="flex items-center text-xl">
-                  <Sparkles className="mr-2 h-5 w-5 text-accent" />
-                  Your Polished Answer
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(answer.ai_polished_answer)}
-                  className="self-start sm:self-auto"
-                >
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy to Clipboard
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleSendToDocuSign}
-                  disabled={sendingToDocuSign}
-                  className="self-start sm:self-auto"
-                >
-                  {sendingToDocuSign ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <FileSignature className="mr-2 h-4 w-4" />
-                      Send to DocuSign
-                    </>
-                  )}
-                </Button>
+                <div>
+                  <CardTitle className="flex items-center text-xl">
+                    <Sparkles className="mr-2 h-5 w-5 text-accent" />
+                    Your Polished Answer
+                  </CardTitle>
+                  <CardDescription className="text-base">Professional, grant-ready response - ready to submit</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <InlineComments answerId={answer.id} section="polished_answer" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(answer.ai_polished_answer)}
+                    className="self-start sm:self-auto"
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy to Clipboard
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSendToDocuSign}
+                    disabled={sendingToDocuSign}
+                    className="self-start sm:self-auto"
+                  >
+                    {sendingToDocuSign ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <FileSignature className="mr-2 h-4 w-4" />
+                        Send to DocuSign
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-              <CardDescription className="text-base">Professional, grant-ready response - ready to submit</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="whitespace-pre-wrap rounded-xl bg-secondary/50 p-6 text-base leading-relaxed border border-border">
