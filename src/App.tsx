@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MobileApp } from "@/mobile/MobileApp";
+import { Footer } from "@/components/Footer";
 import { useGrantNotification } from "@/hooks/useGrantNotification";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
@@ -27,22 +28,27 @@ function AppContent() {
   useGrantNotification();
   
   return (
-    <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/" element={<Navigate to="/home" replace />} />
-            <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/grants" element={<ProtectedRoute><Grants /></ProtectedRoute>} />
-            <Route path="/grants/:slug" element={<ProtectedRoute><GrantDetail /></ProtectedRoute>} />
-            <Route path="/answer/:grantSlug/:questionId" element={<ProtectedRoute><Answer /></ProtectedRoute>} />
-            <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
-            <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
-            <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-    </Routes>
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-1">
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/grants" element={<ProtectedRoute><Grants /></ProtectedRoute>} />
+          <Route path="/grants/:slug" element={<ProtectedRoute><GrantDetail /></ProtectedRoute>} />
+          <Route path="/answer/:grantSlug/:questionId" element={<ProtectedRoute><Answer /></ProtectedRoute>} />
+          <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
+          <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+      <Footer />
+    </div>
   );
 }
 
