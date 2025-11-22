@@ -3,8 +3,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Target, Clock, Award } from 'lucide-react';
+import { TrendingUp, Target, Clock, Award, Download, FileSpreadsheet } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 type AnalyticsData = {
   totalApplications: number;
@@ -20,8 +24,10 @@ type AnalyticsData = {
 
 export default function Analytics() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -162,6 +168,133 @@ export default function Analytics() {
     }
   };
 
+  const exportToPDF = async () => {
+    if (!analytics) return;
+    
+    setExporting(true);
+    try {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(20);
+      doc.text('Grant Application Analytics Report', 20, 20);
+      
+      // Date
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+      
+      // Key Metrics
+      doc.setFontSize(16);
+      doc.text('Key Metrics', 20, 45);
+      doc.setFontSize(12);
+      doc.text(`Total Applications: ${analytics.totalApplications}`, 30, 55);
+      doc.text(`Completed: ${analytics.completed}`, 30, 62);
+      doc.text(`In Progress: ${analytics.inProgress}`, 30, 69);
+      doc.text(`Success Rate: ${analytics.successRate}%`, 30, 76);
+      doc.text(`Avg Match Score: ${analytics.avgMatchScore}/100`, 30, 83);
+      doc.text(`Avg Time to Complete: ${analytics.avgTimeToComplete} days`, 30, 90);
+      
+      // Application Status
+      doc.setFontSize(16);
+      doc.text('Application Status Distribution', 20, 105);
+      doc.setFontSize(10);
+      let yPos = 115;
+      analytics.applicationsByStatus.forEach((item) => {
+        doc.text(`${item.status}: ${item.count}`, 30, yPos);
+        yPos += 7;
+      });
+      
+      // Match Score Distribution
+      doc.setFontSize(16);
+      doc.text('Match Score Distribution', 20, yPos + 10);
+      doc.setFontSize(10);
+      yPos += 20;
+      analytics.matchScoreDistribution.forEach((item) => {
+        doc.text(`${item.range}: ${item.count} grants`, 30, yPos);
+        yPos += 7;
+      });
+      
+      // Save PDF
+      doc.save('grant-analytics-report.pdf');
+      
+      toast({
+        title: 'Report exported',
+        description: 'PDF report has been downloaded.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Export failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportToExcel = async () => {
+    if (!analytics) return;
+    
+    setExporting(true);
+    try {
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      
+      // Key Metrics sheet
+      const metricsData = [
+        ['Metric', 'Value'],
+        ['Total Applications', analytics.totalApplications],
+        ['Completed', analytics.completed],
+        ['In Progress', analytics.inProgress],
+        ['Success Rate', `${analytics.successRate}%`],
+        ['Avg Match Score', analytics.avgMatchScore],
+        ['Avg Time to Complete (days)', analytics.avgTimeToComplete],
+      ];
+      const metricsSheet = XLSX.utils.aoa_to_sheet(metricsData);
+      XLSX.utils.book_append_sheet(wb, metricsSheet, 'Key Metrics');
+      
+      // Status Distribution sheet
+      const statusData = [
+        ['Status', 'Count'],
+        ...analytics.applicationsByStatus.map((item) => [item.status, item.count]),
+      ];
+      const statusSheet = XLSX.utils.aoa_to_sheet(statusData);
+      XLSX.utils.book_append_sheet(wb, statusSheet, 'Status Distribution');
+      
+      // Match Score Distribution sheet
+      const matchScoreData = [
+        ['Score Range', 'Count'],
+        ...analytics.matchScoreDistribution.map((item) => [item.range, item.count]),
+      ];
+      const matchScoreSheet = XLSX.utils.aoa_to_sheet(matchScoreData);
+      XLSX.utils.book_append_sheet(wb, matchScoreSheet, 'Match Scores');
+      
+      // Timeline sheet
+      const timelineData = [
+        ['Month', 'Completed Applications'],
+        ...analytics.completionTimeline.map((item) => [item.month, item.completed]),
+      ];
+      const timelineSheet = XLSX.utils.aoa_to_sheet(timelineData);
+      XLSX.utils.book_append_sheet(wb, timelineSheet, 'Timeline');
+      
+      // Write file
+      XLSX.writeFile(wb, 'grant-analytics-report.xlsx');
+      
+      toast({
+        title: 'Report exported',
+        description: 'Excel report has been downloaded.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Export failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -189,11 +322,31 @@ export default function Analytics() {
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">
-            Track your grant application performance and success metrics
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="mb-2 text-3xl font-bold">Analytics Dashboard</h1>
+            <p className="text-muted-foreground">
+              Track your grant application performance and success metrics
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={exportToPDF}
+              disabled={exporting}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={exportToExcel}
+              disabled={exporting}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Export Excel
+            </Button>
+          </div>
         </div>
 
         {/* Key Metrics */}
