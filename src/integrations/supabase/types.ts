@@ -103,6 +103,62 @@ export type Database = {
         }
         Relationships: []
       }
+      alerts: {
+        Row: {
+          channel_email: boolean
+          channel_push: boolean
+          channel_sms: boolean
+          created_at: string
+          error_message: string | null
+          event_type: string
+          grant_id: string | null
+          grant_name: string | null
+          id: string
+          metadata: Json | null
+          status: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channel_email?: boolean
+          channel_push?: boolean
+          channel_sms?: boolean
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          grant_id?: string | null
+          grant_name?: string | null
+          id?: string
+          metadata?: Json | null
+          status: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channel_email?: boolean
+          channel_push?: boolean
+          channel_sms?: boolean
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          grant_id?: string | null
+          grant_name?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       answers: {
         Row: {
           ai_clarification: string | null
@@ -268,6 +324,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          link: string | null
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           annual_revenue_range: string | null
@@ -278,6 +367,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          is_admin: boolean
           is_minority_owned: boolean | null
           is_woman_owned: boolean | null
           name: string
@@ -295,6 +385,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id: string
+          is_admin?: boolean
           is_minority_owned?: boolean | null
           is_woman_owned?: boolean | null
           name: string
@@ -312,6 +403,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          is_admin?: boolean
           is_minority_owned?: boolean | null
           is_woman_owned?: boolean | null
           name?: string
