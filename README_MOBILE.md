@@ -1,8 +1,18 @@
 # High Spirit Grant Assistant - Native Mobile Apps
 
-This document explains how to build and deploy the native iOS and Android apps for High Spirit Grant Assistant.
+🚀 **STORE-READY CONFIGURATION** - Your Capacitor setup is complete and ready to build!
+
+This document provides step-by-step instructions to build and submit native iOS and Android apps to the App Store and Google Play Store.
 
 ## 📱 Overview
+
+**App Identity:**
+- **App Name**: High Spirit Grant Assistant
+- **Display Name**: HS Grant Assistant
+- **iOS Bundle ID**: com.highspirit.grantassistant
+- **Android Application ID**: com.highspirit.grantassistant
+- **Production URL**: https://68d3aecb-93c8-4e4e-898d-3882414185c4.lovableproject.com
+- **Category**: Business / Finance
 
 The mobile apps use **Capacitor** to wrap the existing web app in a native container. The app loads your web application in a WebView while providing native features like:
 - Native app icons and splash screens
@@ -30,57 +40,43 @@ The mobile apps use **Capacitor** to wrap the existing web app in a native conta
 - Android SDK 33+
 - Google Play Console account ($25 one-time fee)
 
-## 🚀 Initial Setup
+## 🚀 Quick Start - Build Your Apps
 
-### 1. Clone and Install Dependencies
+### Step 1: Export & Clone Project
+
+1. **Export to GitHub**: Click the GitHub button in Lovable (top right)
+2. **Clone locally**:
+```bash
+git clone <your-github-repo-url>
+cd high-spirit-grant-assistant
+```
+
+### Step 2: Install Dependencies
 
 ```bash
-# Clone your repository
-git clone <your-repo-url>
-cd <your-repo-name>
-
-# Install dependencies
 npm install
+```
 
-# Build the web app
+### Step 3: Build Web App
+
+```bash
 npm run build
 ```
 
-### 2. Initialize Capacitor
+### Step 4: Add Native Platforms
 
 ```bash
-# Initialize Capacitor (only needed once)
-npx cap init
-
-# When prompted, accept the defaults:
-# App name: High Spirit Grant Assistant
-# App ID: com.highspirit.grantassistant
-# Web Dir: dist
-```
-
-### 3. Add Native Platforms
-
-```bash
-# Add iOS (Mac only)
+# Add iOS (Mac with Xcode required)
 npx cap add ios
 
 # Add Android
 npx cap add android
+
+# Sync everything
+npx cap sync
 ```
 
-### 4. Configure Your Production URL
-
-**IMPORTANT:** Before building for production, update the server URL in `capacitor.config.ts`:
-
-```typescript
-server: {
-  url: 'https://your-production-domain.com',  // Update this!
-  cleartext: true,
-  androidScheme: 'https'
-}
-```
-
-Current development URL: `https://68d3aecb-93c8-4e4e-898d-3882414185c4.lovableproject.com`
+✅ **Production URL is pre-configured** in `capacitor.config.ts` to point to your live Lovable app.
 
 ## 🎨 Customizing Branding
 
@@ -141,20 +137,37 @@ In Xcode:
    - Choose your Team
 4. Click Play ▶️
 
-### Building for App Store
+### Building for App Store (.ipa)
 
-1. **Archive the app:**
-   - In Xcode: Product → Archive
-   - Wait for the build to complete
-   - Click "Distribute App"
-   - Choose "App Store Connect"
-   - Follow the upload wizard
+1. **Prepare Xcode Project:**
+   - In Xcode, select your project in the navigator
+   - Go to "Signing & Capabilities"
+   - Select your Apple Developer Team
+   - Ensure "Automatically manage signing" is checked
 
-2. **App Store Connect:**
-   - Log in to [App Store Connect](https://appstoreconnect.apple.com)
-   - Create a new app listing
-   - Fill in metadata (description, screenshots, etc.)
-   - Submit for review
+2. **Create Archive:**
+   - In Xcode menu: **Product → Archive**
+   - Wait for build to complete (5-10 minutes)
+   - Xcode Organizer will open automatically
+
+3. **Distribute to App Store:**
+   - Click **"Distribute App"**
+   - Select **"App Store Connect"**
+   - Click **"Upload"**
+   - Select signing options (automatic is easiest)
+   - Click **"Upload"**
+
+4. **App Store Connect Setup:**
+   - Go to [App Store Connect](https://appstoreconnect.apple.com)
+   - Click **"My Apps"** → **"+"** → **"New App"**
+   - Fill in:
+     - **Platform**: iOS
+     - **Name**: High Spirit Grant Assistant
+     - **Primary Language**: English
+     - **Bundle ID**: com.highspirit.grantassistant
+     - **SKU**: HSGrantAssistant001
+   - Add app description, screenshots, and metadata
+   - Submit for review (usually 1-3 days)
 
 ## 🤖 Running on Android
 
@@ -187,61 +200,155 @@ In Android Studio:
 4. Select your device in Android Studio
 5. Click Run ▶️
 
-### Building for Google Play
+### Building for Google Play (.aab)
 
-1. **Generate a signed APK/AAB:**
-
+1. **Generate Signing Key (First Time Only):**
 ```bash
-cd android
-./gradlew bundleRelease
+cd android/app
+keytool -genkey -v -keystore highspirit-release.keystore -alias highspirit -keyalg RSA -keysize 2048 -validity 10000
+```
+   - Enter a strong password (save it securely!)
+   - Fill in your organization details
+
+2. **Configure Signing:**
+   - Create `android/key.properties`:
+```properties
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=highspirit
+storeFile=app/highspirit-release.keystore
 ```
 
-2. **Sign the bundle:**
-   - Create a keystore (first time only):
-```bash
-keytool -genkey -v -keystore my-release-key.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
-```
-
-   - Edit `android/app/build.gradle` to add signing config:
+   - Edit `android/app/build.gradle`:
 ```gradle
+// Add at the top
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
+    ...
     signingConfigs {
         release {
-            storeFile file('my-release-key.keystore')
-            storePassword 'your-password'
-            keyAlias 'my-key-alias'
-            keyPassword 'your-password'
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
         }
     }
     buildTypes {
         release {
             signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
 ```
 
-3. **Upload to Play Console:**
-   - Log in to [Google Play Console](https://play.google.com/console)
-   - Create a new app
-   - Upload the AAB file from `android/app/build/outputs/bundle/release/`
-   - Fill in store listing details
-   - Submit for review
+3. **Build Release AAB:**
+```bash
+cd android
+./gradlew bundleRelease
+```
+   - Output: `android/app/build/outputs/bundle/release/app-release.aab`
+
+4. **Test APK (Optional):**
+```bash
+./gradlew assembleRelease
+```
+   - Output: `android/app/build/outputs/apk/release/app-release.apk`
+   - Install on device: `adb install app-release.apk`
+
+5. **Upload to Google Play Console:**
+   - Go to [Google Play Console](https://play.google.com/console)
+   - Click **"Create app"**
+   - Fill in:
+     - **App name**: High Spirit Grant Assistant
+     - **Default language**: English
+     - **App or game**: App
+     - **Free or paid**: Free
+   - Complete the setup wizard:
+     - **Store listing**: Add description, screenshots, icons
+     - **Content rating**: Fill out questionnaire
+     - **Target audience**: Select age groups
+     - **Privacy policy**: Add your privacy policy URL
+   - Go to **"Release" → "Production"**
+   - Click **"Create new release"**
+   - Upload your `.aab` file
+   - Add release notes
+   - Click **"Review release"** → **"Start rollout to Production"**
+   - Review usually takes 1-3 days
+
+## ✅ Store Submission Checklist
+
+### iOS App Store Requirements
+
+- [ ] Apple Developer Account ($99/year) - [Sign up](https://developer.apple.com/programs/)
+- [ ] App Store Connect account set up
+- [ ] App icon (1024x1024) - Already created in `public/icon.png`
+- [ ] Screenshots for required device sizes:
+  - 6.7" iPhone (1290x2796) - iPhone 15 Pro Max
+  - 6.5" iPhone (1242x2688) - iPhone 11 Pro Max
+  - 5.5" iPhone (1242x2208) - iPhone 8 Plus
+- [ ] App description (4000 character max)
+- [ ] Keywords (100 character max)
+- [ ] Privacy policy URL
+- [ ] Support URL
+- [ ] Age rating completed
+- [ ] Test the app thoroughly on real devices
+
+### Google Play Store Requirements
+
+- [ ] Google Play Developer account ($25 one-time) - [Sign up](https://play.google.com/console/signup)
+- [ ] App icon (512x512) - Already created
+- [ ] Feature graphic (1024x500)
+- [ ] Screenshots (at least 2):
+  - Phone: 16:9 or 9:16 ratio
+  - Tablet (optional): 16:9 or 9:16 ratio
+- [ ] Short description (80 characters max)
+- [ ] Full description (4000 characters max)
+- [ ] Privacy policy URL
+- [ ] Content rating questionnaire completed
+- [ ] Target audience and content selected
+- [ ] Test the app on multiple Android devices
+
+### Both Platforms
+
+- [ ] Create privacy policy (required by both stores)
+- [ ] Prepare app description highlighting:
+  - Find and apply for business grants
+  - AI-powered answer assistance
+  - Track application progress
+  - Filter grants by category, amount, deadline
+- [ ] Test all features:
+  - User registration & login
+  - Grant browsing and filtering
+  - Application creation
+  - AI answer polishing
+  - Profile management
+- [ ] Prepare promotional materials
+- [ ] Set up support email/website
 
 ## 🔄 Development Workflow
 
-### Making Changes
+### Making Changes to the Web App
 
-Every time you update the web app:
+When you update your Lovable web app, the mobile apps automatically get the changes (they load the live URL). However, if you change native features:
 
 ```bash
-# 1. Build the web app
+# 1. Pull latest from GitHub
+git pull
+
+# 2. Build the web app
 npm run build
 
-# 2. Sync changes to native projects
+# 3. Sync changes to native projects
 npx cap sync
 
-# 3. Re-run the app
+# 4. Re-run the app
 # iOS: npx cap open ios (then run in Xcode)
 # Android: npx cap open android (then run in Android Studio)
 ```
@@ -367,12 +474,48 @@ npx cap sync
 npx cap open ios
 npx cap open android
 
+# Build for testing
+npm run build:mobile         # Build web + sync both platforms
+
+# Run on devices with live reload
+npx cap run ios --livereload --external
+npx cap run android --livereload --external
+
 # Update Capacitor
-npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
+npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/ios@latest @capacitor/android@latest
+
+# Check Capacitor setup
+npx cap doctor
 
 # View native logs
-npx cap run ios --livereload
-npx cap run android --livereload
+npx cap run ios
+npx cap run android
+```
+
+## 🎯 Quick Reference: File Locations
+
+```
+Project Structure:
+├── capacitor.config.ts              # Main Capacitor config (✅ production URL set)
+├── public/
+│   ├── icon.png                     # App icon source (1024x1024)
+│   └── splash.png                   # Splash screen source
+├── src/mobile/
+│   └── MobileApp.tsx                # Native features wrapper
+├── ios/                             # iOS native project (created after npx cap add ios)
+│   └── App/
+│       ├── App/
+│       │   ├── Info.plist          # iOS app configuration
+│       │   └── Assets.xcassets     # App icons, splash screens
+│       └── App.xcodeproj           # Xcode project
+├── android/                         # Android native project (created after npx cap add android)
+│   ├── app/
+│   │   ├── build.gradle            # Android build config
+│   │   ├── src/main/
+│   │   │   ├── AndroidManifest.xml
+│   │   │   └── res/                # App icons, splash screens
+│   └── key.properties              # Signing config (YOU CREATE THIS)
+└── dist/                            # Built web app (Capacitor loads this)
 ```
 
 ## 🔗 Resources
