@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
@@ -8,9 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Circle, AlertCircle, FileText, Target, TrendingUp } from 'lucide-react';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function MyApplications() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,11 +88,7 @@ export default function MyApplications() {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -223,21 +222,13 @@ export default function MyApplications() {
             })}
           </div>
         ) : (
-          <Card className="shadow-card">
-            <CardContent className="py-12 md:py-16 text-center">
-              <FileText className="mx-auto mb-4 h-12 w-12 md:h-16 md:w-16 text-muted-foreground opacity-20" />
-              <p className="mb-2 text-lg md:text-xl font-bold text-primary">No applications started yet</p>
-              <p className="mb-6 text-sm md:text-base text-muted-foreground max-w-md mx-auto px-4">
-                Browse available grants and start your first application to access funding opportunities
-              </p>
-              <Link to="/grants">
-                <Button size="lg" className="gap-2">
-                  Browse Grants
-                  <TrendingUp className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={FileText}
+            title="No applications started yet"
+            description="Browse available grants and start your first application to access funding opportunities"
+            actionLabel="Browse Grants"
+            onAction={() => navigate('/grants')}
+          />
         )}
       </div>
     </div>

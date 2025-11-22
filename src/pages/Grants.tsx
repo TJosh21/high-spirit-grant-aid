@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,8 +12,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function Grants() {
+  const navigate = useNavigate();
   const [grants, setGrants] = useState<any[]>([]);
   const [filteredGrants, setFilteredGrants] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -347,9 +350,7 @@ export default function Grants() {
 
         {/* Grants List */}
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          </div>
+          <LoadingScreen />
         ) : filteredGrants.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredGrants.map((grant) => (
@@ -400,13 +401,13 @@ export default function Grants() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <p className="text-xl font-semibold text-muted-foreground">
-                {searchQuery ? 'No grants found matching your search' : 'No grants available'}
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Search}
+            title={searchQuery ? 'No grants found' : 'No grants available'}
+            description={searchQuery ? 'Try adjusting your search terms or filters to find more opportunities' : 'Check back soon for new funding opportunities'}
+            actionLabel={searchQuery ? 'Clear Search' : undefined}
+            onAction={searchQuery ? () => setSearchQuery('') : undefined}
+          />
         )}
       </div>
     </div>

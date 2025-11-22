@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, TrendingUp, FileText, ArrowRight, Target } from 'lucide-react';
+import { Sparkles, TrendingUp, FileText, ArrowRight, Target, Zap, Award } from 'lucide-react';
 import { getTopRecommendedGrants } from '@/utils/grantMatching';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function Home() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({ total: 0, ready: 0 });
   const [recommendedGrants, setRecommendedGrants] = useState<any[]>([]);
@@ -70,27 +73,81 @@ export default function Home() {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-primary via-primary-hover to-primary py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Enhanced Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary-hover to-accent py-16 md:py-24">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-10 left-10 h-64 w-64 rounded-full bg-primary-foreground blur-3xl animate-float-up"></div>
+          <div className="absolute bottom-10 right-10 h-96 w-96 rounded-full bg-accent blur-3xl animate-float-up" style={{ animationDelay: '1s' }}></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <h1 className="mb-3 text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground font-display">
-              Welcome back, {profile?.name?.split(' ')[0] || 'there'}! 👋
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 animate-fade-in">
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <span className="text-sm font-semibold text-primary-foreground">AI-Powered Grant Assistant</span>
+            </div>
+            
+            {/* Main Heading */}
+            <h1 className="mb-6 text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground font-display leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              Welcome back,<br />
+              <span className="bg-gradient-to-r from-primary-foreground to-primary-foreground/80 bg-clip-text text-transparent">
+                {profile?.name?.split(' ')[0] || 'there'}!
+              </span> 👋
             </h1>
-            <p className="text-base md:text-lg text-primary-foreground/90">
-              Your AI-powered grant assistant is ready to help you secure funding for your business
+            
+            {/* Subtitle */}
+            <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              Your intelligent assistant is ready to help you discover and secure the perfect funding opportunities for your business
             </p>
+            
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <Button 
+                size="lg" 
+                onClick={() => navigate('/grants')}
+                className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-premium gap-2 group"
+              >
+                <Zap className="h-5 w-5 group-hover:animate-pulse" />
+                Explore Grants
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate('/my-applications')}
+                className="bg-transparent border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:border-primary-foreground/50 gap-2"
+              >
+                <Award className="h-5 w-5" />
+                My Applications
+              </Button>
+            </div>
+
+            {/* Stats Preview */}
+            <div className="mt-12 grid grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-bold text-primary-foreground font-display">{stats.total}</div>
+                <div className="text-sm text-primary-foreground/70 mt-1">Started</div>
+              </div>
+              <div className="text-center border-x border-primary-foreground/20">
+                <div className="text-3xl md:text-4xl font-bold text-primary-foreground font-display">{stats.ready}</div>
+                <div className="text-sm text-primary-foreground/70 mt-1">Ready</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl font-bold text-primary-foreground font-display">
+                  {stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0}%
+                </div>
+                <div className="text-sm text-primary-foreground/70 mt-1">Success</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -214,15 +271,13 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-                <p className="mb-2 text-xl font-semibold">No grants available yet</p>
-                <p className="text-base text-muted-foreground">
-                  Check back soon for new opportunities
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={FileText}
+              title="No grants available yet"
+              description="Check back soon for new funding opportunities tailored to your business profile"
+              actionLabel="Browse All Grants"
+              onAction={() => navigate('/grants')}
+            />
           )}
         </div>
 
