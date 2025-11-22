@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Sparkles, Copy, Loader2, Lightbulb, AlertCircle, Save } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 
@@ -25,6 +25,9 @@ export default function Answer() {
   const [aiProcessing, setAiProcessing] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const wordCount = useMemo(() => {
     return userRoughAnswer.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -44,6 +47,43 @@ export default function Answer() {
       loadData();
     }
   }, [grantSlug, questionId]);
+
+  // Auto-save functionality with debouncing
+  const autoSaveDraft = useCallback(async (roughAnswer: string) => {
+    if (!user || !grant || !question || !roughAnswer.trim()) return;
+
+    setAutoSaving(true);
+    try {
+      await saveAnswer({
+        user_rough_answer: roughAnswer,
+        status: answer?.status || 'in_progress',
+      });
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setAutoSaving(false);
+    }
+  }, [user, grant, question, answer?.status]);
+
+  // Debounced auto-save when user types
+  useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    if (userRoughAnswer.trim()) {
+      autoSaveTimerRef.current = setTimeout(() => {
+        autoSaveDraft(userRoughAnswer);
+      }, 2000); // Auto-save after 2 seconds of no typing
+    }
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [userRoughAnswer, autoSaveDraft]);
 
   const loadData = async () => {
     try {
@@ -306,13 +346,27 @@ export default function Answer() {
             <CardDescription className="text-base">Write your thoughts naturally - our AI will polish it into a professional grant response</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Textarea
-              value={userRoughAnswer}
-              onChange={(e) => setUserRoughAnswer(e.target.value)}
-              placeholder="Write your response here naturally... Don't worry about perfect grammar or phrasing - just share your thoughts, and our AI will transform it into a professional grant answer."
-              rows={10}
-              className="resize-none text-base"
-            />
+            <div className="relative">
+              <Textarea
+                value={userRoughAnswer}
+                onChange={(e) => setUserRoughAnswer(e.target.value)}
+                placeholder="Write your response here naturally... Don't worry about perfect grammar or phrasing - just share your thoughts, and our AI will transform it into a professional grant answer."
+                rows={10}
+                className="resize-none text-base"
+              />
+              {autoSaving && (
+                <div className="absolute top-2 right-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Saving...
+                </div>
+              )}
+              {lastSaved && !autoSaving && (
+                <div className="absolute top-2 right-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-muted-foreground">
+                  <Save className="h-3 w-3 text-status-success" />
+                  Saved {new Date(lastSaved).toLocaleTimeString()}
+                </div>
+              )}
+            </div>
             
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
