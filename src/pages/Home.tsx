@@ -10,6 +10,8 @@ import { Sparkles, TrendingUp, FileText, ArrowRight, Target, Zap, Award } from '
 import { getTopRecommendedGrants } from '@/utils/grantMatching';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { EmptyState } from '@/components/EmptyState';
+import { ScrollReveal } from '@/components/ScrollReveal';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const { user } = useAuth();
@@ -154,60 +156,42 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         {/* Stats Cards */}
-        <div className="mb-10 grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Card className="border-l-4 border-l-primary shadow-card hover:shadow-premium overflow-hidden relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <CardHeader className="pb-3 relative z-10">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center justify-between">
-                Applications Started
-                <TrendingUp className="h-4 w-4 text-primary" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl md:text-4xl font-bold text-primary animate-count-up font-display">{stats.total}</div>
-              <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full animate-shimmer" style={{ width: `${Math.min((stats.total / 10) * 100, 100)}%` }}></div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-accent shadow-card hover:shadow-premium overflow-hidden relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <CardHeader className="pb-3 relative z-10">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center justify-between">
-                Ready to Submit
-                <Sparkles className="h-4 w-4 text-accent" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl md:text-4xl font-bold text-accent animate-count-up font-display">{stats.ready}</div>
-              <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-accent rounded-full animate-shimmer" style={{ width: `${Math.min((stats.ready / 10) * 100, 100)}%` }}></div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-primary shadow-card hover:shadow-premium sm:col-span-2 lg:col-span-1 overflow-hidden relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <CardHeader className="pb-3 relative z-10">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center justify-between">
-                Success Rate
-                <Target className="h-4 w-4 text-primary" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl md:text-4xl font-bold text-primary animate-count-up font-display">
-                {stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0}%
-              </div>
-              <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500" style={{ width: `${stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0}%` }}></div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <ScrollReveal>
+          <div className="mb-10 grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { title: 'Applications Started', value: stats.total, icon: TrendingUp, color: 'primary', progress: Math.min((stats.total / 10) * 100, 100) },
+              { title: 'Ready to Submit', value: stats.ready, icon: Sparkles, color: 'accent', progress: Math.min((stats.ready / 10) * 100, 100) },
+              { title: 'Success Rate', value: `${stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0}%`, icon: Target, color: 'primary', progress: stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0 }
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+              >
+                <Card className="border-l-4 border-l-${stat.color} shadow-card hover:shadow-premium overflow-hidden relative group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-${stat.color}/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <CardHeader className="pb-3 relative z-10">
+                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center justify-between">
+                      {stat.title}
+                      <stat.icon className={`h-4 w-4 text-${stat.color}`} />
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="relative z-10">
+                    <div className={`text-3xl md:text-4xl font-bold text-${stat.color} animate-count-up font-display`}>{stat.value}</div>
+                    <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
+                      <div className={`h-full bg-${stat.color} rounded-full animate-shimmer`} style={{ width: `${stat.progress}%` }}></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </ScrollReveal>
 
         {/* Recommended Grants */}
-        <div className="mb-10">
+        <ScrollReveal delay={0.2}>
+          <div className="mb-10">
           <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b-2 border-accent/50">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-primary mb-1 font-display">Recommended For You</h2>
@@ -280,9 +264,11 @@ export default function Home() {
             />
           )}
         </div>
+        </ScrollReveal>
 
         {/* Quick Actions */}
-        <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
+        <ScrollReveal delay={0.3}>
+          <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
           <Link to="/grants">
             <Card className="transition-all hover:shadow-card-hover shadow-card h-full">
               <CardHeader>
@@ -315,6 +301,7 @@ export default function Home() {
             </Card>
           </Link>
         </div>
+        </ScrollReveal>
       </div>
     </div>
   );
