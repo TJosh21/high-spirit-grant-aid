@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { DollarSign, Calendar, Building2, MapPin, Filter, X, Save, Trash2, GitCompare, Heart, TrendingUp, Sparkles } from "lucide-react";
+import { DollarSign, Calendar, Building2, MapPin, Filter, X, Save, Trash2, GitCompare, Heart, TrendingUp, Sparkles, Search, Loader2 } from "lucide-react";
 import { format, isWithinInterval, addDays } from "date-fns";
 import { EmptyState } from "@/components/EmptyState";
 import { PageTransition } from "@/components/PageTransition";
@@ -34,6 +34,10 @@ interface FilterPreset {
 
 export default function Grants() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [aiSearchQuery, setAiSearchQuery] = useState("");
+  const [isAiSearching, setIsAiSearching] = useState(false);
+  const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
+  const [showAiResults, setShowAiResults] = useState(false);
   const [deadlineProximity, setDeadlineProximity] = useState<string>("all");
   const [minAmount, setMinAmount] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<string>("");
@@ -299,6 +303,55 @@ export default function Grants() {
     );
   };
 
+  const handleAiSearch = async () => {
+    if (!aiSearchQuery.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a search query",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAiSearching(true);
+    setShowAiResults(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase.functions.invoke('ai-grant-search', {
+        body: { 
+          query: aiSearchQuery,
+          userId: user?.id 
+        }
+      });
+
+      if (error) throw error;
+
+      setAiSearchResults(data.results || []);
+      toast({
+        title: "Search complete",
+        description: `Found ${data.results?.length || 0} matching grants`,
+      });
+    } catch (error: any) {
+      console.error('AI search error:', error);
+      toast({
+        title: "Search failed",
+        description: error.message || 'Failed to search grants',
+        variant: "destructive",
+      });
+      setAiSearchResults([]);
+    } finally {
+      setIsAiSearching(false);
+    }
+  };
+
+  const clearAiSearch = () => {
+    setAiSearchQuery("");
+    setShowAiResults(false);
+    setAiSearchResults([]);
+  };
+
   const selectedGrants = filteredGrants.filter(g => selectedForComparison.includes(g.id));
 
   return (
@@ -321,12 +374,69 @@ export default function Grants() {
             </div>
           </ScrollReveal>
 
+          {/* AI-Powered Search */}
+          <ScrollReveal delay={0.1}>
+            <Card className="mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  AI-Powered Grant Search
+                </CardTitle>
+                <CardDescription>
+                  Describe what you're looking for in natural language
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="E.g., 'grants for women-owned tech startups in California under $50k'"
+                    value={aiSearchQuery}
+                    onChange={(e) => setAiSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleAiSearch} 
+                    disabled={isAiSearching}
+                    className="gap-2"
+                  >
+                    {isAiSearching ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    Search
+                  </Button>
+                </div>
+                {showAiResults && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {aiSearchResults.length > 0 
+                        ? `Found ${aiSearchResults.length} matching grants`
+                        : 'No matches found'}
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearAiSearch}
+                      className="h-8"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </ScrollReveal>
+
           {/* Search and Filter Bar */}
           <div className="mb-6 flex gap-4 flex-wrap">
             <div className="flex-1 min-w-[250px]">
               <Input
                 type="text"
-                placeholder="Search grants..."
+                placeholder="Search grants by keyword..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full"
@@ -534,8 +644,42 @@ export default function Grants() {
             </div>
           )}
 
+          {/* AI Search Results */}
+          {showAiResults && aiSearchResults.length > 0 && (
+            <ScrollReveal delay={0.2}>
+              <div className="mb-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                    <h2 className="text-2xl font-bold">AI Search Results</h2>
+                  </div>
+                  <Badge variant="outline">
+                    {aiSearchResults.length} {aiSearchResults.length === 1 ? 'match' : 'matches'}
+                  </Badge>
+                </div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {aiSearchResults.map((grant) => {
+                    return (
+                      <GrantCard
+                        key={grant.id}
+                        grant={grant}
+                        matchScore={grant.ai_relevance_score}
+                        matchReasons={grant.ai_reasoning ? [grant.ai_reasoning] : []}
+                        isFavorited={favorites.has(grant.id)}
+                        onFavoriteToggle={() => toggleFavorite(grant.id)}
+                        isSelected={selectedForComparison.includes(grant.id)}
+                        onToggleSelection={() => toggleGrantSelection(grant.id)}
+                        selectionDisabled={!selectedForComparison.includes(grant.id) && selectedForComparison.length >= 3}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </ScrollReveal>
+          )}
+
           {/* Recommendations Section */}
-          {!isLoading && recommendations.length > 0 && !showFavoritesOnly && activeFilterCount === 0 && (
+          {!isLoading && recommendations.length > 0 && !showFavoritesOnly && activeFilterCount === 0 && !showAiResults && (
             <div className="mb-10">
               <div className="flex items-center gap-2 mb-6">
                 <TrendingUp className="w-6 h-6 text-primary" />
@@ -566,44 +710,48 @@ export default function Grants() {
           )}
 
           {/* Grants List */}
-          {isLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <GrantCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : filteredGrants.length === 0 ? (
-            <EmptyState
-              icon={showFavoritesOnly ? Heart : Filter}
-              title={showFavoritesOnly ? "No favorites yet" : "No grants match your filters"}
-              description={showFavoritesOnly ? "Start favoriting grants to see them here" : "Try adjusting your filters to see more results"}
-              actionLabel={showFavoritesOnly ? undefined : "Clear Filters"}
-              onAction={showFavoritesOnly ? undefined : clearAllFilters}
-            />
-          ) : (
-            <ScrollReveal>
-              <div className="mb-4 text-sm text-muted-foreground">
-                Select up to 3 grants to compare side-by-side
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredGrants.map((grant) => {
-                  const matchScore = profile ? calculateGrantMatchScore(grant, profile) : null;
-                  return (
-                    <GrantCard
-                      key={grant.id}
-                      grant={grant}
-                      matchScore={matchScore?.score}
-                      matchReasons={matchScore?.matchReasons}
-                      isFavorited={favorites.has(grant.id)}
-                      onFavoriteToggle={() => toggleFavorite(grant.id)}
-                      isSelected={selectedForComparison.includes(grant.id)}
-                      onToggleSelection={() => toggleGrantSelection(grant.id)}
-                      selectionDisabled={!selectedForComparison.includes(grant.id) && selectedForComparison.length >= 3}
-                    />
-                  );
-                })}
-              </div>
-            </ScrollReveal>
+          {!showAiResults && (
+            <>
+              {isLoading ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <GrantCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : filteredGrants.length === 0 ? (
+                <EmptyState
+                  icon={showFavoritesOnly ? Heart : Filter}
+                  title={showFavoritesOnly ? "No favorites yet" : "No grants match your filters"}
+                  description={showFavoritesOnly ? "Start favoriting grants to see them here" : "Try adjusting your filters to see more results"}
+                  actionLabel={showFavoritesOnly ? undefined : "Clear Filters"}
+                  onAction={showFavoritesOnly ? undefined : clearAllFilters}
+                />
+              ) : (
+                <ScrollReveal>
+                  <div className="mb-4 text-sm text-muted-foreground">
+                    Select up to 3 grants to compare side-by-side
+                  </div>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredGrants.map((grant) => {
+                      const matchScore = profile ? calculateGrantMatchScore(grant, profile) : null;
+                      return (
+                        <GrantCard
+                          key={grant.id}
+                          grant={grant}
+                          matchScore={matchScore?.score}
+                          matchReasons={matchScore?.matchReasons}
+                          isFavorited={favorites.has(grant.id)}
+                          onFavoriteToggle={() => toggleFavorite(grant.id)}
+                          isSelected={selectedForComparison.includes(grant.id)}
+                          onToggleSelection={() => toggleGrantSelection(grant.id)}
+                          selectionDisabled={!selectedForComparison.includes(grant.id) && selectedForComparison.length >= 3}
+                        />
+                      );
+                    })}
+                  </div>
+                </ScrollReveal>
+              )}
+            </>
           )}
         </div>
       </div>

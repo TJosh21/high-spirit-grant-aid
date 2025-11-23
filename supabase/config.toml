@@ -1,5 +1,8 @@
 project_id = "gosszudhblnahkxlcuqq"
 
+[functions.ai-grant-search]
+verify_jwt = false
+
 [functions.monitor-usage-patterns]
 verify_jwt = false
 
