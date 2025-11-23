@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Loader2, BookTemplate, Plus } from 'lucide-react';
+import { Sparkles, Loader2, BookTemplate } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -24,17 +24,44 @@ export function TemplateSelector({ questions, grantId, onTemplateApplied }: Temp
   }, []);
 
   const loadTemplates = async () => {
-    const { data, error } = await supabase
-      .from('application_templates')
-      .select('*')
-      .order('usage_count', { ascending: false });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (error) {
+      // Get user's templates
+      const { data: userTemplates } = await supabase
+        .from('application_templates')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('usage_count', { ascending: false });
+
+      // Get organization memberships
+      const { data: orgMemberships } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id);
+
+      let allTemplates = userTemplates || [];
+
+      // Get organization templates if user is in any organization
+      if (orgMemberships && orgMemberships.length > 0) {
+        const orgIds: string[] = orgMemberships.map((m: any) => m.organization_id);
+        
+        const { data: orgTemplates } = await supabase
+          .from('application_templates')
+          .select('*')
+          .in('organization_id', orgIds)
+          .order('usage_count', { ascending: false });
+
+        if (orgTemplates) {
+          allTemplates = [...allTemplates, ...orgTemplates];
+        }
+      }
+
+      setTemplates(allTemplates);
+    } catch (error) {
       console.error('Error loading templates:', error);
-      return;
     }
-
-    setTemplates(data || []);
   };
 
   const handleGenerateTemplate = async () => {
@@ -59,12 +86,23 @@ export function TemplateSelector({ questions, grantId, onTemplateApplied }: Temp
       // Save template
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Check if user is in an organization
+        const { data: orgMembership } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
         await supabase.from('application_templates').insert({
           user_id: user.id,
+          organization_id: orgMembership?.organization_id || null,
           title: `Auto-generated Template - ${new Date().toLocaleDateString()}`,
           description: data.overallStrategy,
           template_data: data.templateAnswers,
         });
+
+        await loadTemplates();
       }
     } catch (error: any) {
       console.error('Error generating template:', error);
@@ -85,7 +123,7 @@ export function TemplateSelector({ questions, grantId, onTemplateApplied }: Temp
       // Increment usage count
       await supabase
         .from('application_templates')
-        .update({ usage_count: template.usage_count + 1 })
+        .update({ usage_count: (template.usage_count || 0) + 1 })
         .eq('id', template.id);
 
       toast({
@@ -143,13 +181,22 @@ export function TemplateSelector({ questions, grantId, onTemplateApplied }: Temp
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between"
+                      className="w-full justify-start gap-2"
                       onClick={() => setSelectedTemplate(template)}
                     >
-                      <span className="truncate">{template.title}</span>
-                      <Badge variant="secondary" className="ml-2">
-                        Used {template.usage_count}x
-                      </Badge>
+                      <div className="flex-1 flex items-center justify-between">
+                        <span className="truncate">{template.title}</span>
+                        <div className="flex items-center gap-2">
+                          {template.organization_id && (
+                            <Badge variant="outline" className="text-xs">
+                              Shared
+                            </Badge>
+                          )}
+                          <Badge variant="secondary">
+                            Used {template.usage_count || 0}x
+                          </Badge>
+                        </div>
+                      </div>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">

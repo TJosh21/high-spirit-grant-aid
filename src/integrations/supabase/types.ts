@@ -459,6 +459,7 @@ export type Database = {
           description: string | null
           id: string
           industry: string | null
+          organization_id: string | null
           template_data: Json
           title: string
           updated_at: string | null
@@ -470,6 +471,7 @@ export type Database = {
           description?: string | null
           id?: string
           industry?: string | null
+          organization_id?: string | null
           template_data: Json
           title: string
           updated_at?: string | null
@@ -481,13 +483,22 @@ export type Database = {
           description?: string | null
           id?: string
           industry?: string | null
+          organization_id?: string | null
           template_data?: Json
           title?: string
           updated_at?: string | null
           usage_count?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "application_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_documents: {
         Row: {

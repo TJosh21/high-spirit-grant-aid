@@ -23,6 +23,8 @@ import { InlineComments } from '@/components/InlineComments';
 import { TemplateSelector } from '@/components/TemplateSelector';
 import { AIFeedbackPanel } from '@/components/AIFeedbackPanel';
 import { VoiceDictation } from '@/components/VoiceDictation';
+import { ApplicationReview } from '@/components/ApplicationReview';
+import { LiveCollaboration } from '@/components/LiveCollaboration';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -438,6 +440,14 @@ export default function Answer() {
           </TabsList>
 
           <TabsContent value="answer" className="space-y-6">
+            {/* Live Collaboration */}
+            {answer && <LiveCollaboration answerId={answer.id} />}
+            
+            {/* Application Review */}
+            {answer && grant && user && (
+              <ApplicationReview grantId={grant.id} userId={user.id} />
+            )}
+            
             {/* Smart Templates */}
             <TemplateSelector
               questions={[question]}
