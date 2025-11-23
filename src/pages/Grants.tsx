@@ -20,6 +20,9 @@ import { GrantComparison } from "@/components/GrantComparison";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calculateGrantMatchScore, getTopRecommendedGrants } from "@/utils/grantMatching";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { GrantRecommendationsTab } from "@/components/GrantRecommendationsTab";
 
 interface FilterPreset {
   name: string;
@@ -52,6 +55,9 @@ export default function Grants() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("all");
 
   const { data: grants, isLoading } = useQuery({
     queryKey: ['grants'],
@@ -72,6 +78,13 @@ export default function Grants() {
     loadProfile();
     loadFavorites();
   }, []);
+
+  // Load AI recommendations when profile is available
+  useEffect(() => {
+    if (profile) {
+      loadAiRecommendations();
+    }
+  }, [profile]);
 
   const loadProfile = async () => {
     try {
@@ -105,6 +118,25 @@ export default function Grants() {
       setFavorites(new Set(data?.map(f => f.grant_id) || []));
     } catch (error: any) {
       console.error('Error loading favorites:', error);
+    }
+  };
+
+  const loadAiRecommendations = async () => {
+    setLoadingRecommendations(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase.functions.invoke('ai-grant-recommendations', {
+        body: { userId: user.id }
+      });
+
+      if (error) throw error;
+      setAiRecommendations(data.recommendations || []);
+    } catch (error: any) {
+      console.error('Error loading AI recommendations:', error);
+    } finally {
+      setLoadingRecommendations(false);
     }
   };
 
@@ -678,66 +710,76 @@ export default function Grants() {
             </ScrollReveal>
           )}
 
-          {/* Recommendations Section */}
-          {!isLoading && recommendations.length > 0 && !showFavoritesOnly && activeFilterCount === 0 && !showAiResults && (
-            <div className="mb-10">
-              <div className="flex items-center gap-2 mb-6">
-                <TrendingUp className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold">Recommended for You</h2>
-                <Badge variant="secondary" className="bg-gradient-accent">
-                  Based on your profile
-                </Badge>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {recommendations.map((matchScore) => (
-                  <GrantCard
-                    key={matchScore.grant.id}
-                    grant={matchScore.grant}
-                    matchScore={matchScore.score}
-                    matchReasons={matchScore.matchReasons}
-                    isFavorited={favorites.has(matchScore.grant.id)}
-                    onFavoriteToggle={() => toggleFavorite(matchScore.grant.id)}
-                    isSelected={selectedForComparison.includes(matchScore.grant.id)}
-                    onToggleSelection={() => toggleGrantSelection(matchScore.grant.id)}
-                    selectionDisabled={!selectedForComparison.includes(matchScore.grant.id) && selectedForComparison.length >= 3}
-                  />
-                ))}
-              </div>
-              <div className="mt-8 border-t pt-8">
-                <h2 className="text-2xl font-bold mb-6">All Available Grants</h2>
-              </div>
-            </div>
-          )}
-
-          {/* Grants List */}
+          {/* Tabs for All Grants and AI Recommendations */}
           {!showAiResults && (
-            <>
-              {isLoading ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <GrantCardSkeleton key={i} />
-                  ))}
-                </div>
-              ) : filteredGrants.length === 0 ? (
-                <EmptyState
-                  icon={showFavoritesOnly ? Heart : Filter}
-                  title={showFavoritesOnly ? "No favorites yet" : "No grants match your filters"}
-                  description={showFavoritesOnly ? "Start favoriting grants to see them here" : "Try adjusting your filters to see more results"}
-                  actionLabel={showFavoritesOnly ? undefined : "Clear Filters"}
-                  onAction={showFavoritesOnly ? undefined : clearAllFilters}
-                />
-              ) : (
-                <ScrollReveal>
-                  <div className="mb-4 text-sm text-muted-foreground">
-                    Select up to 3 grants to compare side-by-side
-                  </div>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredGrants.map((grant) => {
-                      const matchScore = profile ? calculateGrantMatchScore(grant, profile) : null;
-                      return (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="all">All Grants</TabsTrigger>
+                <TabsTrigger value="ai-recommendations" className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  AI Recommendations
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all" className="mt-6">
+                {/* Recommendations Section */}
+                {!isLoading && recommendations.length > 0 && !showFavoritesOnly && activeFilterCount === 0 && (
+                  <div className="mb-10">
+                    <div className="flex items-center gap-2 mb-6">
+                      <TrendingUp className="w-6 h-6 text-primary" />
+                      <h2 className="text-2xl font-bold">Recommended for You</h2>
+                      <Badge variant="secondary" className="bg-gradient-accent">
+                        Based on your profile
+                      </Badge>
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {recommendations.map((matchScore) => (
                         <GrantCard
-                          key={grant.id}
-                          grant={grant}
+                          key={matchScore.grant.id}
+                          grant={matchScore.grant}
+                          matchScore={matchScore.score}
+                          matchReasons={matchScore.matchReasons}
+                          isFavorited={favorites.has(matchScore.grant.id)}
+                          onFavoriteToggle={() => toggleFavorite(matchScore.grant.id)}
+                          isSelected={selectedForComparison.includes(matchScore.grant.id)}
+                          onToggleSelection={() => toggleGrantSelection(matchScore.grant.id)}
+                          selectionDisabled={!selectedForComparison.includes(matchScore.grant.id) && selectedForComparison.length >= 3}
+                        />
+                      ))}
+                    </div>
+                    <div className="mt-8 border-t pt-8">
+                      <h2 className="text-2xl font-bold mb-6">All Available Grants</h2>
+                    </div>
+                  </div>
+                )}
+
+                {/* Grants List */}
+                {isLoading ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <GrantCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : filteredGrants.length === 0 ? (
+                  <EmptyState
+                    icon={showFavoritesOnly ? Heart : Filter}
+                    title={showFavoritesOnly ? "No favorites yet" : "No grants match your filters"}
+                    description={showFavoritesOnly ? "Start favoriting grants to see them here" : "Try adjusting your filters to see more results"}
+                    actionLabel={showFavoritesOnly ? undefined : "Clear Filters"}
+                    onAction={showFavoritesOnly ? undefined : clearAllFilters}
+                  />
+                ) : (
+                  <ScrollReveal>
+                    <div className="mb-4 text-sm text-muted-foreground">
+                      Select up to 3 grants to compare side-by-side
+                    </div>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredGrants.map((grant) => {
+                        const matchScore = profile ? calculateGrantMatchScore(grant, profile) : null;
+                        return (
+                          <GrantCard
+                            key={grant.id}
+                            grant={grant}
                           matchScore={matchScore?.score}
                           matchReasons={matchScore?.matchReasons}
                           isFavorited={favorites.has(grant.id)}
@@ -745,13 +787,23 @@ export default function Grants() {
                           isSelected={selectedForComparison.includes(grant.id)}
                           onToggleSelection={() => toggleGrantSelection(grant.id)}
                           selectionDisabled={!selectedForComparison.includes(grant.id) && selectedForComparison.length >= 3}
-                        />
-                      );
-                    })}
-                  </div>
-                </ScrollReveal>
-              )}
-            </>
+                          />
+                        );
+                      })}
+                    </div>
+                  </ScrollReveal>
+                )}
+              </TabsContent>
+
+              <TabsContent value="ai-recommendations" className="mt-6">
+                <GrantRecommendationsTab
+                  recommendations={aiRecommendations}
+                  loading={loadingRecommendations}
+                  favorites={favorites}
+                  onFavoriteToggle={toggleFavorite}
+                />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </div>
