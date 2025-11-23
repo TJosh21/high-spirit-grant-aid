@@ -198,11 +198,16 @@ export default function Grants() {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <ScrollReveal>
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-4">Available Grants</h1>
-              <p className="text-lg text-muted-foreground">
-                Discover funding opportunities for your business
-              </p>
+            <div className="mb-8 relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-3xl blur-3xl -z-10" />
+              <div className="relative bg-gradient-to-br from-primary/10 via-accent/5 to-transparent p-8 rounded-2xl border border-primary/10">
+                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Available Grants
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  Discover funding opportunities for your business 💼✨
+                </p>
+              </div>
             </div>
           </ScrollReveal>
 
@@ -417,9 +422,10 @@ export default function Grants() {
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredGrants.map((grant) => (
-                  <Card key={grant.id} className={`hover:shadow-premium transition-all ${selectedForComparison.includes(grant.id) ? 'ring-2 ring-primary' : ''}`}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
+                  <Card key={grant.id} className={`group relative overflow-hidden hover:shadow-premium transition-all duration-300 ${selectedForComparison.includes(grant.id) ? 'ring-2 ring-primary shadow-lg' : ''}`}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <CardHeader className="relative">
+                      <div className="flex items-center justify-between mb-3">
                         <Checkbox
                           checked={selectedForComparison.includes(grant.id)}
                           onCheckedChange={() => toggleGrantSelection(grant.id)}
@@ -427,49 +433,67 @@ export default function Grants() {
                           className="mr-2"
                         />
                         {selectedForComparison.includes(grant.id) && (
-                          <Badge variant="default" className="ml-auto">
+                          <Badge className="ml-auto bg-gradient-to-r from-primary to-primary/80 border-0 shadow-md">
                             <Check className="h-3 w-3 mr-1" />
                             Selected
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-start justify-between mb-2">
-                        <Badge variant="outline">
-                          {grant.sponsor_type || 'Grant'}
+                      <div className="flex items-start justify-between mb-3">
+                        <Badge className="bg-gradient-to-r from-accent/20 to-accent/10 text-accent-foreground border-accent/30 font-semibold">
+                          {grant.sponsor_type || '🎯 Grant'}
                         </Badge>
                         {grant.deadline && (
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3 mr-1" />
+                          <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                            <Calendar className="h-3 w-3" />
                             {format(new Date(grant.deadline), 'MMM dd')}
                           </div>
                         )}
                       </div>
-                      <CardTitle className="line-clamp-2">{grant.name}</CardTitle>
+                      <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors duration-300">
+                        {grant.name}
+                      </CardTitle>
                       <CardDescription className="line-clamp-2">
                         {grant.short_description}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
+                    <CardContent className="relative">
+                      <div className="space-y-4">
                         {grant.amount_max && (
-                          <div className="flex items-center text-sm">
-                            <DollarSign className="h-4 w-4 mr-2 text-primary" />
-                            <span className="font-semibold text-primary">
-                              Up to {grant.currency || 'USD'} {grant.amount_max.toLocaleString()}
-                            </span>
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-xl blur-sm" />
+                            <div className="relative flex items-center gap-2 bg-gradient-to-r from-primary/5 to-accent/5 p-3 rounded-xl border border-primary/10">
+                              <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-md">
+                                <DollarSign className="h-4 w-4 text-primary-foreground" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground font-medium">Funding Amount</span>
+                                <span className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                                  {grant.currency || 'USD'} {grant.amount_max.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         )}
                         {grant.industry_tags && grant.industry_tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-2">
                             {grant.industry_tags.slice(0, 2).map((tag: string, i: number) => (
-                              <Badge key={i} variant="outline" className="text-xs">
+                              <Badge 
+                                key={i} 
+                                className="bg-gradient-to-r from-secondary to-muted text-foreground border-border/50 hover:from-primary/10 hover:to-accent/10 transition-all duration-300"
+                              >
                                 {tag}
                               </Badge>
                             ))}
+                            {grant.industry_tags.length > 2 && (
+                              <Badge className="bg-muted text-muted-foreground">
+                                +{grant.industry_tags.length - 2}
+                              </Badge>
+                            )}
                           </div>
                         )}
-                        <Button asChild className="w-full">
-                          <Link to={`/grants/${grant.slug}`}>View Details</Link>
+                        <Button asChild className="w-full group-hover:shadow-lg transition-shadow duration-300 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
+                          <Link to={`/grants/${grant.slug}`}>View Details →</Link>
                         </Button>
                       </div>
                     </CardContent>
