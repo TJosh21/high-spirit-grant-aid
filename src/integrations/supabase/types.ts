@@ -563,6 +563,35 @@ export type Database = {
           },
         ]
       }
+      grant_favorites: {
+        Row: {
+          created_at: string
+          grant_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grant_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grant_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grant_favorites_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grant_match_scores: {
         Row: {
           created_at: string | null

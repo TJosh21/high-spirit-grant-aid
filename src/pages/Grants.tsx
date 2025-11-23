@@ -1,12 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { DollarSign, Calendar, Building2, MapPin, Filter, X, Save, Trash2, GitCompare, Check } from "lucide-react";
+import { DollarSign, Calendar, Building2, MapPin, Filter, X, Save, Trash2, GitCompare, Heart, TrendingUp, Sparkles } from "lucide-react";
 import { format, isWithinInterval, addDays } from "date-fns";
-import { LoadingScreen } from "@/components/LoadingScreen";
 import { EmptyState } from "@/components/EmptyState";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal } from "@/components/ScrollReveal";
@@ -19,6 +18,8 @@ import { toast } from "@/hooks/use-toast";
 import { Navigation } from "@/components/Navigation";
 import { GrantComparison } from "@/components/GrantComparison";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
+import { calculateGrantMatchScore, getTopRecommendedGrants } from "@/utils/grantMatching";
 
 interface FilterPreset {
   name: string;
@@ -44,6 +45,9 @@ export default function Grants() {
   const [presetName, setPresetName] = useState("");
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
 
   const { data: grants, isLoading } = useQuery({
     queryKey: ['grants'],
@@ -59,6 +63,105 @@ export default function Grants() {
     }
   });
 
+  // Load user profile and favorites
+  useEffect(() => {
+    loadProfile();
+    loadFavorites();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error: any) {
+      console.error('Error loading profile:', error);
+    }
+  };
+
+  const loadFavorites = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('grant_favorites')
+        .select('grant_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setFavorites(new Set(data?.map(f => f.grant_id) || []));
+    } catch (error: any) {
+      console.error('Error loading favorites:', error);
+    }
+  };
+
+  const toggleFavorite = async (grantId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to favorite grants",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const isFavorited = favorites.has(grantId);
+
+      if (isFavorited) {
+        const { error } = await supabase
+          .from('grant_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('grant_id', grantId);
+
+        if (error) throw error;
+        setFavorites(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(grantId);
+          return newSet;
+        });
+        toast({
+          title: "Removed from favorites",
+          description: "Grant has been removed from your favorites",
+        });
+      } else {
+        const { error } = await supabase
+          .from('grant_favorites')
+          .insert({ user_id: user.id, grant_id: grantId });
+
+        if (error) throw error;
+        setFavorites(prev => new Set([...prev, grantId]));
+        toast({
+          title: "Added to favorites",
+          description: "Grant has been saved to your favorites",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating favorites",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Get recommendations
+  const recommendations = useMemo(() => {
+    if (!grants || !profile) return [];
+    return getTopRecommendedGrants(grants, profile, 3);
+  }, [grants, profile]);
+
   // Get unique industries from all grants
   const allIndustries = useMemo(() => {
     if (!grants) return [];
@@ -73,7 +176,10 @@ export default function Grants() {
   const filteredGrants = useMemo(() => {
     if (!grants) return [];
 
-    return grants.filter(grant => {
+    let filtered = grants.filter(grant => {
+      // Favorites filter
+      if (showFavoritesOnly && !favorites.has(grant.id)) return false;
+
       // Search filter
       const matchesSearch = searchQuery === "" || 
         grant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -105,7 +211,9 @@ export default function Grants() {
 
       return matchesSearch && matchesDeadline && matchesAmount && matchesIndustry;
     });
-  }, [grants, searchQuery, deadlineProximity, minAmount, maxAmount, selectedIndustries]);
+
+    return filtered;
+  }, [grants, searchQuery, deadlineProximity, minAmount, maxAmount, selectedIndustries, showFavoritesOnly, favorites]);
 
   const saveFilterPreset = () => {
     if (!presetName.trim()) {
@@ -169,6 +277,7 @@ export default function Grants() {
     setMinAmount("");
     setMaxAmount("");
     setSelectedIndustries([]);
+    setShowFavoritesOnly(false);
   };
 
   const activeFilterCount = [
@@ -176,7 +285,8 @@ export default function Grants() {
     deadlineProximity !== "all",
     minAmount !== "",
     maxAmount !== "",
-    selectedIndustries.length > 0
+    selectedIndustries.length > 0,
+    showFavoritesOnly
   ].filter(Boolean).length;
 
   const toggleGrantSelection = (grantId: string) => {
@@ -212,8 +322,8 @@ export default function Grants() {
           </ScrollReveal>
 
           {/* Search and Filter Bar */}
-          <div className="mb-6 flex gap-4">
-            <div className="flex-1">
+          <div className="mb-6 flex gap-4 flex-wrap">
+            <div className="flex-1 min-w-[250px]">
               <Input
                 type="text"
                 placeholder="Search grants..."
@@ -222,6 +332,20 @@ export default function Grants() {
                 className="w-full"
               />
             </div>
+
+            <Button
+              variant={showFavoritesOnly ? "default" : "outline"}
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className="gap-2"
+            >
+              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+              Favorites
+              {favorites.size > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {favorites.size}
+                </Badge>
+              )}
+            </Button>
 
             {selectedForComparison.length > 0 && (
               <Button 
@@ -374,6 +498,12 @@ export default function Grants() {
                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setSearchQuery("")} />
                 </Badge>
               )}
+              {showFavoritesOnly && (
+                <Badge variant="secondary">
+                  Favorites Only
+                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setShowFavoritesOnly(false)} />
+                </Badge>
+              )}
               {deadlineProximity !== "all" && (
                 <Badge variant="secondary">
                   Deadline: {deadlineProximity}
@@ -404,16 +534,51 @@ export default function Grants() {
             </div>
           )}
 
+          {/* Recommendations Section */}
+          {!isLoading && recommendations.length > 0 && !showFavoritesOnly && activeFilterCount === 0 && (
+            <div className="mb-10">
+              <div className="flex items-center gap-2 mb-6">
+                <TrendingUp className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold">Recommended for You</h2>
+                <Badge variant="secondary" className="bg-gradient-accent">
+                  Based on your profile
+                </Badge>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {recommendations.map((matchScore) => (
+                  <GrantCard
+                    key={matchScore.grant.id}
+                    grant={matchScore.grant}
+                    matchScore={matchScore.score}
+                    matchReasons={matchScore.matchReasons}
+                    isFavorited={favorites.has(matchScore.grant.id)}
+                    onFavoriteToggle={() => toggleFavorite(matchScore.grant.id)}
+                    isSelected={selectedForComparison.includes(matchScore.grant.id)}
+                    onToggleSelection={() => toggleGrantSelection(matchScore.grant.id)}
+                    selectionDisabled={!selectedForComparison.includes(matchScore.grant.id) && selectedForComparison.length >= 3}
+                  />
+                ))}
+              </div>
+              <div className="mt-8 border-t pt-8">
+                <h2 className="text-2xl font-bold mb-6">All Available Grants</h2>
+              </div>
+            </div>
+          )}
+
           {/* Grants List */}
           {isLoading ? (
-            <LoadingScreen />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <GrantCardSkeleton key={i} />
+              ))}
+            </div>
           ) : filteredGrants.length === 0 ? (
             <EmptyState
-              icon={Filter}
-              title="No grants match your filters"
-              description="Try adjusting your filters to see more results"
-              actionLabel="Clear Filters"
-              onAction={clearAllFilters}
+              icon={showFavoritesOnly ? Heart : Filter}
+              title={showFavoritesOnly ? "No favorites yet" : "No grants match your filters"}
+              description={showFavoritesOnly ? "Start favoriting grants to see them here" : "Try adjusting your filters to see more results"}
+              actionLabel={showFavoritesOnly ? undefined : "Clear Filters"}
+              onAction={showFavoritesOnly ? undefined : clearAllFilters}
             />
           ) : (
             <ScrollReveal>
@@ -421,95 +586,199 @@ export default function Grants() {
                 Select up to 3 grants to compare side-by-side
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredGrants.map((grant) => (
-                  <Card key={grant.id} className={`group relative overflow-hidden hover:shadow-premium transition-all duration-300 ${selectedForComparison.includes(grant.id) ? 'ring-2 ring-primary shadow-lg' : ''}`}>
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <CardHeader className="relative">
-                      <div className="flex items-center justify-between mb-3">
-                        <Checkbox
-                          checked={selectedForComparison.includes(grant.id)}
-                          onCheckedChange={() => toggleGrantSelection(grant.id)}
-                          disabled={!selectedForComparison.includes(grant.id) && selectedForComparison.length >= 3}
-                          className="mr-2"
-                        />
-                        {selectedForComparison.includes(grant.id) && (
-                          <Badge className="ml-auto bg-gradient-to-r from-primary to-primary/80 border-0 shadow-md">
-                            <Check className="h-3 w-3 mr-1" />
-                            Selected
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-start justify-between mb-3">
-                        <Badge className="bg-gradient-to-r from-accent/20 to-accent/10 text-accent-foreground border-accent/30 font-semibold">
-                          {grant.sponsor_type || '🎯 Grant'}
-                        </Badge>
-                        {grant.deadline && (
-                          <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
-                            <Calendar className="h-3 w-3" />
-                            {format(new Date(grant.deadline), 'MMM dd')}
-                          </div>
-                        )}
-                      </div>
-                      <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors duration-300">
-                        {grant.name}
-                      </CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {grant.short_description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <div className="space-y-4">
-                        {grant.amount_max && (
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-xl blur-sm" />
-                            <div className="relative flex items-center gap-2 bg-gradient-to-r from-primary/5 to-accent/5 p-3 rounded-xl border border-primary/10">
-                              <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-md">
-                                <DollarSign className="h-4 w-4 text-primary-foreground" />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-xs text-muted-foreground font-medium">Funding Amount</span>
-                                <span className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                                  {grant.currency || 'USD'} {grant.amount_max.toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        {grant.industry_tags && grant.industry_tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {grant.industry_tags.slice(0, 2).map((tag: string, i: number) => (
-                              <Badge 
-                                key={i} 
-                                className="bg-gradient-to-r from-secondary to-muted text-foreground border-border/50 hover:from-primary/10 hover:to-accent/10 transition-all duration-300"
-                              >
-                                {tag}
-                              </Badge>
-                            ))}
-                            {grant.industry_tags.length > 2 && (
-                              <Badge className="bg-muted text-muted-foreground">
-                                +{grant.industry_tags.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                        <Button asChild className="w-full group-hover:shadow-lg transition-shadow duration-300 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
-                          <Link to={`/grants/${grant.slug}`}>View Details →</Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {filteredGrants.map((grant) => {
+                  const matchScore = profile ? calculateGrantMatchScore(grant, profile) : null;
+                  return (
+                    <GrantCard
+                      key={grant.id}
+                      grant={grant}
+                      matchScore={matchScore?.score}
+                      matchReasons={matchScore?.matchReasons}
+                      isFavorited={favorites.has(grant.id)}
+                      onFavoriteToggle={() => toggleFavorite(grant.id)}
+                      isSelected={selectedForComparison.includes(grant.id)}
+                      onToggleSelection={() => toggleGrantSelection(grant.id)}
+                      selectionDisabled={!selectedForComparison.includes(grant.id) && selectedForComparison.length >= 3}
+                    />
+                  );
+                })}
               </div>
             </ScrollReveal>
           )}
         </div>
+      </div>
 
-        <GrantComparison 
+      {showComparison && (
+        <GrantComparison
           grants={selectedGrants}
-          onRemove={(grantId) => setSelectedForComparison(prev => prev.filter(id => id !== grantId))}
+          onRemove={(grantId) => {
+            setSelectedForComparison(prev => prev.filter(id => id !== grantId));
+          }}
           onClose={() => setShowComparison(false)}
         />
-      </div>
+      )}
     </PageTransition>
   );
 }
+
+const GrantCardSkeleton = () => (
+  <Card className="overflow-hidden">
+    <div className="relative h-2 bg-gradient-primary" />
+    <CardHeader className="pb-4">
+      <div className="flex items-start justify-between mb-2">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-6 w-16" />
+      </div>
+      <Skeleton className="h-6 w-full mb-2" />
+      <Skeleton className="h-6 w-3/4 mb-4" />
+      <Skeleton className="h-16 w-full" />
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-4" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-4" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-6 w-24" />
+      </div>
+      <Skeleton className="h-10 w-full" />
+    </CardContent>
+  </Card>
+);
+
+interface GrantCardProps {
+  grant: any;
+  matchScore?: number;
+  matchReasons?: string[];
+  isFavorited: boolean;
+  onFavoriteToggle: () => void;
+  isSelected: boolean;
+  onToggleSelection: () => void;
+  selectionDisabled: boolean;
+}
+
+const GrantCard = ({ grant, matchScore, matchReasons, isFavorited, onFavoriteToggle, isSelected, onToggleSelection, selectionDisabled }: GrantCardProps) => (
+  <Card className={`group relative overflow-hidden hover:shadow-premium transition-all duration-300 ${isSelected ? 'ring-2 ring-primary shadow-lg' : ''}`}>
+    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    
+    {/* Gradient header bar */}
+    <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-primary opacity-60 group-hover:opacity-100 transition-opacity" />
+    
+    {/* Match Score Badge */}
+    {matchScore && matchScore >= 70 && (
+      <div className="absolute top-4 right-4 z-10">
+        <Badge className="bg-gradient-success text-white border-0 shadow-lg">
+          <Sparkles className="w-3 h-3 mr-1" />
+          {matchScore}% Match
+        </Badge>
+      </div>
+    )}
+
+    <CardHeader className="relative pb-4 pt-8">
+      <div className="flex items-center gap-2 mb-3">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={onToggleSelection}
+          disabled={selectionDisabled}
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hover:scale-110 transition-transform"
+          onClick={(e) => {
+            e.stopPropagation();
+            onFavoriteToggle();
+          }}
+        >
+          <Heart 
+            className={`w-5 h-5 transition-colors ${
+              isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
+            }`}
+          />
+        </Button>
+        <Badge variant="secondary" className="bg-gradient-accent ml-auto">
+          {grant.sponsor_type || 'Grant'}
+        </Badge>
+      </div>
+      <CardTitle className="text-xl leading-tight group-hover:text-primary transition-colors">
+        {grant.name}
+      </CardTitle>
+      <CardDescription className="line-clamp-2 text-sm">
+        {grant.short_description}
+      </CardDescription>
+    </CardHeader>
+
+    <CardContent className="relative space-y-4">
+      {/* Match Reasons */}
+      {matchReasons && matchReasons.length > 0 && (
+        <div className="flex gap-1 flex-wrap">
+          {matchReasons.slice(0, 2).map((reason, idx) => (
+            <Badge key={idx} variant="outline" className="text-xs bg-success/10 text-success border-success/20">
+              {reason}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* Funding Amount */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-card p-4 backdrop-blur-sm border border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <DollarSign className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Funding Range</p>
+            <p className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
+              {grant.currency || 'USD'} {grant.amount_min?.toLocaleString()} - {grant.amount_max?.toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Deadline */}
+      {grant.deadline && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="w-4 h-4 text-primary" />
+          <span>Due {format(new Date(grant.deadline), 'MMM dd, yyyy')}</span>
+        </div>
+      )}
+
+      {/* Location */}
+      {grant.geography_tags && grant.geography_tags.length > 0 && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="w-4 h-4 text-primary" />
+          <span>{grant.geography_tags[0]}</span>
+        </div>
+      )}
+
+      {/* Industry Tags */}
+      {grant.industry_tags && grant.industry_tags.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          {grant.industry_tags.slice(0, 2).map((tag: string, index: number) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              <Building2 className="w-3 h-3 mr-1" />
+              {tag}
+            </Badge>
+          ))}
+          {grant.industry_tags.length > 2 && (
+            <Badge variant="outline" className="text-xs bg-muted">
+              +{grant.industry_tags.length - 2}
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* View Details Button */}
+      <Link to={`/grants/${grant.slug}`}>
+        <Button className="w-full bg-gradient-primary hover:shadow-lg transition-all">
+          View Details
+        </Button>
+      </Link>
+    </CardContent>
+  </Card>
+);
