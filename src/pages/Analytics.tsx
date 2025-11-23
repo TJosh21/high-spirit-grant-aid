@@ -17,9 +17,12 @@ type AnalyticsData = {
   avgMatchScore: number;
   avgTimeToComplete: number;
   successRate: number;
+  avgTimePerQuestion: number;
+  totalQuestionsAnswered: number;
   matchScoreDistribution: Array<{ range: string; count: number }>;
   applicationsByStatus: Array<{ status: string; count: number; color: string }>;
   completionTimeline: Array<{ month: string; completed: number }>;
+  timePerQuestionDistribution: Array<{ range: string; count: number }>;
 };
 
 export default function Analytics() {
@@ -132,6 +135,37 @@ export default function Analytics() {
         { status: 'Completed', count: statusCounts.ready, color: '#10b981' },
       ].filter((item) => item.count > 0);
 
+      // Calculate time spent per question
+      const questionsWithTime = answers.filter(
+        (a) => a.created_at && a.last_updated_at && a.status !== 'not_started'
+      );
+
+      const avgTimePerQuestion = questionsWithTime.length > 0
+        ? Math.round(
+            questionsWithTime.reduce((sum, a) => {
+              const created = new Date(a.created_at!);
+              const updated = new Date(a.last_updated_at!);
+              const minutes = Math.max(5, Math.floor((updated.getTime() - created.getTime()) / (1000 * 60)));
+              return sum + minutes;
+            }, 0) / questionsWithTime.length
+          )
+        : 0;
+
+      // Time per question distribution
+      const timeRanges = questionsWithTime.map((a) => {
+        const created = new Date(a.created_at!);
+        const updated = new Date(a.last_updated_at!);
+        return Math.floor((updated.getTime() - created.getTime()) / (1000 * 60));
+      });
+
+      const timePerQuestionDistribution = [
+        { range: '0-30 min', count: timeRanges.filter((t) => t <= 30).length },
+        { range: '31-60 min', count: timeRanges.filter((t) => t > 30 && t <= 60).length },
+        { range: '1-2 hrs', count: timeRanges.filter((t) => t > 60 && t <= 120).length },
+        { range: '2-4 hrs', count: timeRanges.filter((t) => t > 120 && t <= 240).length },
+        { range: '4+ hrs', count: timeRanges.filter((t) => t > 240).length },
+      ];
+
       // Completion timeline (last 6 months)
       const completionTimeline = Array.from({ length: 6 }, (_, i) => {
         const date = new Date();
@@ -156,10 +190,13 @@ export default function Analytics() {
         completed,
         avgMatchScore,
         avgTimeToComplete,
+        avgTimePerQuestion,
+        totalQuestionsAnswered: questionsWithTime.length,
         successRate: totalApplications > 0 ? Math.round((completed / totalApplications) * 100) : 0,
         matchScoreDistribution,
         applicationsByStatus,
         completionTimeline,
+        timePerQuestionDistribution,
       });
     } catch (error) {
       console.error('Error loading analytics:', error);
@@ -454,8 +491,31 @@ export default function Analytics() {
             </CardContent>
           </Card>
 
+          {/* Time Per Question Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Time Spent Per Question</CardTitle>
+              <CardDescription>
+                Average: {analytics.avgTimePerQuestion} minutes
+                {' • '}
+                {analytics.totalQuestionsAnswered} questions answered
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.timePerQuestionDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="range" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="hsl(var(--chart-2))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
           {/* Completion Timeline */}
-          <Card className="lg:col-span-2">
+          <Card>
             <CardHeader>
               <CardTitle>Application Completion Timeline</CardTitle>
               <CardDescription>Completed applications over the last 6 months</CardDescription>
