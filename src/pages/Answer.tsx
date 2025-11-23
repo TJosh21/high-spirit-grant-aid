@@ -21,6 +21,7 @@ import { DocumentParser } from '@/components/DocumentParser';
 import { ApplicationScoreCard } from '@/components/ApplicationScoreCard';
 import { InlineComments } from '@/components/InlineComments';
 import { TemplateSelector } from '@/components/TemplateSelector';
+import { AIFeedbackPanel } from '@/components/AIFeedbackPanel';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -472,112 +473,131 @@ export default function Answer() {
               <ApplicationScoreCard answerId={answer.id} />
             )}
 
-         <Card className="mb-6 shadow-card">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">Your Rough Answer</CardTitle>
-                <CardDescription className="text-base">Write your thoughts naturally - our AI will polish it into a professional grant response</CardDescription>
-              </div>
-              <InlineComments answerId={answer?.id} section="rough_answer" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Textarea
-                value={userRoughAnswer}
-                onChange={(e) => setUserRoughAnswer(e.target.value)}
-                placeholder="Write your response here naturally... Don't worry about perfect grammar or phrasing - just share your thoughts, and our AI will transform it into a professional grant answer."
-                rows={10}
-                className="resize-none text-base"
-              />
-              {autoSaving && (
-                <div className="absolute top-2 right-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Saving...
-                </div>
-              )}
-              {lastSaved && !autoSaving && (
-                <div className="absolute top-2 right-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-muted-foreground">
-                  <Save className="h-3 w-3 text-status-success" />
-                  Saved {new Date(lastSaved).toLocaleTimeString()}
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1">
-                {question?.word_limit && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {wordCount} / {question.word_limit} words
-                      </span>
-                      {wordLimitStatus && (
-                        <span className={wordLimitStatus.type === 'over' ? 'text-destructive' : 'text-muted-foreground'}>
-                          {wordLimitStatus.message}
-                        </span>
+            {/* Two-column layout: Main content + AI Feedback */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main content area */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl">Your Rough Answer</CardTitle>
+                        <CardDescription className="text-base">Write your thoughts naturally - our AI will polish it into a professional grant response</CardDescription>
+                      </div>
+                      <InlineComments answerId={answer?.id} section="rough_answer" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="relative">
+                      <Textarea
+                        value={userRoughAnswer}
+                        onChange={(e) => setUserRoughAnswer(e.target.value)}
+                        placeholder="Write your response here naturally... Don't worry about perfect grammar or phrasing - just share your thoughts, and our AI will transform it into a professional grant answer."
+                        rows={15}
+                        className="resize-none text-base"
+                      />
+                      {autoSaving && (
+                        <div className="absolute top-2 right-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Saving...
+                        </div>
+                      )}
+                      {lastSaved && !autoSaving && (
+                        <div className="absolute top-2 right-2 flex items-center gap-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-muted-foreground">
+                          <Save className="h-3 w-3 text-status-success" />
+                          Saved {new Date(lastSaved).toLocaleTimeString()}
+                        </div>
                       )}
                     </div>
-                    <Progress 
-                      value={Math.min((wordCount / question.word_limit) * 100, 100)} 
-                      className={wordLimitStatus?.type === 'over' ? '[&>div]:bg-destructive' : ''}
-                    />
-                  </div>
-                )}
+                    
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        {question?.word_limit && (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                {wordCount} / {question.word_limit} words
+                              </span>
+                              {wordLimitStatus && (
+                                <span className={wordLimitStatus.type === 'over' ? 'text-destructive' : 'text-muted-foreground'}>
+                                  {wordLimitStatus.message}
+                                </span>
+                              )}
+                            </div>
+                            <Progress 
+                              value={Math.min((wordCount / question.word_limit) * 100, 100)} 
+                              className={wordLimitStatus?.type === 'over' ? '[&>div]:bg-destructive' : ''}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {wordLimitStatus?.type === 'over' && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Your answer exceeds the word limit. Consider getting AI suggestions to optimize it.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button
+                        onClick={getSuggestions}
+                        disabled={loadingSuggestions || !userRoughAnswer.trim()}
+                        variant="outline"
+                        size="lg"
+                        className="flex-1"
+                      >
+                        {loadingSuggestions ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Getting suggestions...
+                          </>
+                        ) : (
+                          <>
+                            <Lightbulb className="mr-2 h-4 w-4" />
+                            Get Suggestions
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={handlePolish}
+                        disabled={aiProcessing || !userRoughAnswer.trim()}
+                        size="lg"
+                        className="flex-1"
+                      >
+                        {aiProcessing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Polishing your answer...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Polish My Answer
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* AI Feedback Panel - Sticky Sidebar */}
+              <div className="lg:col-span-1">
+                <AIFeedbackPanel
+                  questionText={question?.question_text || ''}
+                  userAnswer={userRoughAnswer}
+                  wordLimit={question?.word_limit}
+                  helperText={question?.helper_text}
+                  onAnalysisComplete={(analysis) => {
+                    console.log('Analysis completed:', analysis);
+                  }}
+                />
               </div>
             </div>
-
-            {wordLimitStatus?.type === 'over' && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Your answer exceeds the word limit. Consider getting AI suggestions to optimize it.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={getSuggestions}
-                disabled={loadingSuggestions || !userRoughAnswer.trim()}
-                variant="outline"
-                size="lg"
-                className="flex-1"
-              >
-                {loadingSuggestions ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Getting suggestions...
-                  </>
-                ) : (
-                  <>
-                    <Lightbulb className="mr-2 h-4 w-4" />
-                    Get Suggestions
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handlePolish}
-                disabled={aiProcessing || !userRoughAnswer.trim()}
-                size="lg"
-                className="flex-1"
-              >
-                {aiProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Polishing your answer...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Polish My Answer
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {suggestions.length > 0 && (
           <Card className="mb-6 border-primary/20 bg-primary/5">

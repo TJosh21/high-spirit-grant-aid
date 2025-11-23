@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.send-grant-notifications]
 verify_jwt = false
+
+[functions.analyze-answer-quality]
+verify_jwt = false
