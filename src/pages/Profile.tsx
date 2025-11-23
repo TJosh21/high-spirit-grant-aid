@@ -12,6 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User, Bell, Mail } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { ProfileCompletionTracker } from '@/components/ProfileCompletionTracker';
+import { GrantSuccessTips } from '@/components/GrantSuccessTips';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -113,15 +115,25 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="mb-2 text-2xl md:text-3xl font-bold text-primary">Profile Settings</h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Manage your account and business information
           </p>
+        </div>
+
+        {/* Profile Completion Tracker */}
+        <div className="mb-6">
+          <ProfileCompletionTracker profile={profile} />
+        </div>
+
+        {/* Grant Success Tips */}
+        <div className="mb-6">
+          <GrantSuccessTips />
         </div>
 
         <Card className="shadow-card">
