@@ -27,6 +27,8 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
+import Team from "./pages/Team";
+import Calendar from "./pages/Calendar";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +57,8 @@ function AppContent() {
             <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+            <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </PageTransition>

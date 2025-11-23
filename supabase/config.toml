@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.analyze-answer-quality]
 verify_jwt = false
+
+[functions.ai-grant-recommendations]
+verify_jwt = false
