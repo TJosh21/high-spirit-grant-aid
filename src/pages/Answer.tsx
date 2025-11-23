@@ -22,6 +22,7 @@ import { ApplicationScoreCard } from '@/components/ApplicationScoreCard';
 import { InlineComments } from '@/components/InlineComments';
 import { TemplateSelector } from '@/components/TemplateSelector';
 import { AIFeedbackPanel } from '@/components/AIFeedbackPanel';
+import { VoiceDictation } from '@/components/VoiceDictation';
 
 export default function Answer() {
   const { grantSlug, questionId } = useParams();
@@ -488,6 +489,13 @@ export default function Answer() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* Voice Dictation */}
+                    <VoiceDictation
+                      onTranscript={(text) => {
+                        setUserRoughAnswer((prev) => (prev ? `${prev} ${text}` : text));
+                      }}
+                    />
+
                     <div className="relative">
                       <Textarea
                         value={userRoughAnswer}
