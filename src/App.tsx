@@ -29,6 +29,7 @@ import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
 import Team from "./pages/Team";
 import Calendar from "./pages/Calendar";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -42,9 +43,9 @@ function AppContent() {
       <div className="flex-1">
         <PageTransition>
           <Routes>
+            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/grants" element={<ProtectedRoute><Grants /></ProtectedRoute>} />
