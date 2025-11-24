@@ -100,7 +100,7 @@ export default function Onboarding() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 px-4 py-8">
-      <Card className="w-full max-w-2xl shadow-royal">
+      <Card className="w-full max-w-2xl shadow-royal max-h-[90vh] flex flex-col">
         <CardHeader>
           <CardTitle className="text-2xl">Tell us about your business</CardTitle>
           <CardDescription>
@@ -111,8 +111,8 @@ export default function Onboarding() {
             <div className={`h-2 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
           </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {step === 1 && (
               <>
                 <div className="space-y-2">
@@ -151,7 +151,8 @@ export default function Onboarding() {
                     value={formData.business_description}
                     onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
                     placeholder="Briefly describe what your business does..."
-                    rows={4}
+                    rows={3}
+                    className="resize-none"
                   />
                 </div>
 
