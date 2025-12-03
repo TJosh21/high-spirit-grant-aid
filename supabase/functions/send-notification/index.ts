@@ -11,7 +11,7 @@ const corsHeaders = {
 const ADMIN_EMAIL = 'taiwo@highspiritfinancial.com';
 
 interface NotificationRequest {
-  type: 'user_registration' | 'grant_created' | 'rough_answer_submitted' | 'polished_answer_generated' | 'user_login' | 'rate_limit';
+  type: 'user_registration' | 'welcome_email' | 'grant_created' | 'rough_answer_submitted' | 'polished_answer_generated' | 'user_login' | 'rate_limit';
   data: any;
   channels?: {
     email?: boolean;
@@ -146,6 +146,143 @@ serve(async (req) => {
                     <p class="label">Profile Link:</p>
                     <p class="value"><a href="${data.profileLink}">${data.profileLink}</a></p>
                   </div>
+                </div>
+              </div>
+            </body>
+          </html>
+        `;
+        break;
+
+      case 'welcome_email':
+        subject = '🎉 Welcome to High Spirit Grant Assistant – Your Grant Success Journey Starts Now!';
+        html = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; margin: 0; padding: 0; background: #f3f4f6; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: white; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center; }
+                .header h1 { margin: 0 0 10px 0; font-size: 28px; }
+                .header p { margin: 0; opacity: 0.9; font-size: 16px; }
+                .content { background: white; padding: 30px; border-radius: 0 0 16px 16px; }
+                .welcome-box { background: linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; text-align: center; }
+                .welcome-box h2 { margin: 0 0 10px 0; color: #1e40af; }
+                .section-title { font-size: 18px; font-weight: bold; color: #1f2937; margin: 25px 0 15px 0; display: flex; align-items: center; gap: 8px; }
+                .tip-card { background: #f9fafb; border-radius: 10px; padding: 15px; margin-bottom: 12px; border-left: 4px solid #2563eb; }
+                .tip-card h3 { margin: 0 0 5px 0; color: #1f2937; font-size: 15px; }
+                .tip-card p { margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5; }
+                .feature-grid { display: table; width: 100%; }
+                .feature-row { display: table-row; }
+                .feature { display: table-cell; width: 50%; padding: 10px; vertical-align: top; }
+                .feature-inner { background: #f0fdf4; border-radius: 10px; padding: 15px; text-align: center; height: 100%; box-sizing: border-box; }
+                .feature-icon { font-size: 28px; margin-bottom: 8px; }
+                .feature-title { font-weight: bold; color: #166534; font-size: 14px; margin-bottom: 4px; }
+                .feature-desc { color: #6b7280; font-size: 12px; }
+                .cta-button { display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 20px 0; }
+                .cta-section { text-align: center; padding: 20px 0; }
+                .footer { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; }
+                .stats { display: table; width: 100%; margin: 20px 0; }
+                .stat { display: table-cell; width: 33.33%; text-align: center; padding: 15px; }
+                .stat-number { font-size: 24px; font-weight: bold; color: #2563eb; }
+                .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Welcome, ${data.name}! 🚀</h1>
+                  <p>Your journey to winning grants starts now</p>
+                </div>
+                <div class="content">
+                  <div class="welcome-box">
+                    <h2>You're All Set!</h2>
+                    <p style="color: #4b5563; margin: 0;">Your account has been created successfully. Let's get you started on your path to grant success.</p>
+                  </div>
+
+                  <div class="stats">
+                    <div class="stat">
+                      <div class="stat-number">500+</div>
+                      <div class="stat-label">Active Grants</div>
+                    </div>
+                    <div class="stat">
+                      <div class="stat-number">AI</div>
+                      <div class="stat-label">Powered Assistant</div>
+                    </div>
+                    <div class="stat">
+                      <div class="stat-number">24/7</div>
+                      <div class="stat-label">Available</div>
+                    </div>
+                  </div>
+
+                  <div class="section-title">⚡ Quick Start Tips</div>
+                  
+                  <div class="tip-card">
+                    <h3>1. Complete Your Business Profile</h3>
+                    <p>Add your business details to get personalized grant recommendations with AI-powered matching scores.</p>
+                  </div>
+                  
+                  <div class="tip-card">
+                    <h3>2. Browse Matching Grants</h3>
+                    <p>Use our AI-powered search to find grants that match your business. Try natural language queries like "grants for women-owned tech startups".</p>
+                  </div>
+                  
+                  <div class="tip-card">
+                    <h3>3. Start Your First Application</h3>
+                    <p>Select a grant and begin answering questions. Our AI assistant will help polish your responses for maximum impact.</p>
+                  </div>
+                  
+                  <div class="tip-card">
+                    <h3>4. Track Your Progress</h3>
+                    <p>Use your dashboard to monitor all applications, deadlines, and success predictions in one place.</p>
+                  </div>
+
+                  <div class="section-title">✨ Key Features</div>
+                  
+                  <div class="feature-grid">
+                    <div class="feature-row">
+                      <div class="feature">
+                        <div class="feature-inner">
+                          <div class="feature-icon">🤖</div>
+                          <div class="feature-title">AI Writing Assistant</div>
+                          <div class="feature-desc">Get real-time feedback and polish your answers</div>
+                        </div>
+                      </div>
+                      <div class="feature">
+                        <div class="feature-inner">
+                          <div class="feature-icon">🎯</div>
+                          <div class="feature-title">Smart Matching</div>
+                          <div class="feature-desc">Find grants perfect for your business</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="feature-row">
+                      <div class="feature">
+                        <div class="feature-inner">
+                          <div class="feature-icon">🎤</div>
+                          <div class="feature-title">Voice Dictation</div>
+                          <div class="feature-desc">Speak your answers, we'll transcribe them</div>
+                        </div>
+                      </div>
+                      <div class="feature">
+                        <div class="feature-inner">
+                          <div class="feature-icon">📊</div>
+                          <div class="feature-title">Success Prediction</div>
+                          <div class="feature-desc">AI-powered scoring for your applications</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cta-section">
+                    <a href="${data.dashboardLink}" class="cta-button">Go to Your Dashboard →</a>
+                    <p style="color: #6b7280; font-size: 14px; margin-top: 15px;">Start exploring grants and building your first application today!</p>
+                  </div>
+                </div>
+                <div class="footer">
+                  <p>High Spirit Grant Assistant</p>
+                  <p>Empowering businesses to win grants with AI</p>
+                  <p style="margin-top: 10px;">Need help? Reply to this email or visit our support center.</p>
                 </div>
               </div>
             </body>
@@ -393,14 +530,19 @@ serve(async (req) => {
     if (channels.email && resendApiKey) {
       try {
         const resend = new Resend(resendApiKey);
+        
+        // For welcome emails, send to the user; for other notifications, send to admin
+        const recipientEmail = type === 'welcome_email' ? data.email : ADMIN_EMAIL;
+        const senderName = type === 'welcome_email' ? 'High Spirit Grant Assistant' : 'High Spirit Alerts';
+        
         await resend.emails.send({
-          from: 'High Spirit Alerts <alerts@resend.dev>',
-          to: ADMIN_EMAIL,
+          from: `${senderName} <alerts@resend.dev>`,
+          to: recipientEmail,
           subject: subject,
           html: html,
         });
         emailSuccess = true;
-        console.log('Email sent successfully to', ADMIN_EMAIL);
+        console.log('Email sent successfully to', recipientEmail);
       } catch (error) {
         console.error('Email error:', error);
         errorMessage += `Email failed: ${error instanceof Error ? error.message : 'Unknown error'}; `;
