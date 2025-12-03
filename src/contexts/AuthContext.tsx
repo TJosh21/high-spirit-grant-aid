@@ -62,9 +62,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     
-    // Send notification for new user registration
+    // Send notifications for new user registration
     if (!error && data.user) {
       try {
+        // Send admin notification about new registration
         await supabase.functions.invoke('send-notification', {
           body: {
             type: 'user_registration',
@@ -78,8 +79,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             channels: { email: true, sms: true, push: false }
           }
         });
+        
+        // Send welcome email to the new user with quick start tips
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            type: 'welcome_email',
+            data: {
+              name: name,
+              email: email,
+              timestamp: new Date().toISOString(),
+              dashboardLink: `${window.location.origin}/home`,
+              userId: data.user.id,
+            },
+            channels: { email: true, sms: false, push: false }
+          }
+        });
       } catch (notifError) {
-        console.error('Failed to send registration notification:', notifError);
+        console.error('Failed to send registration notifications:', notifError);
       }
     }
     
