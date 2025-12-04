@@ -15,6 +15,9 @@ import Welcome from "./pages/Welcome";
 import AuthPage from "./pages/AuthPage";
 import Pricing from "./pages/Pricing";
 import Features from "./pages/Features";
+import Contact from "./pages/Contact";
+import About from "./pages/About";
+import FAQ from "./pages/FAQ";
 import UserDashboard from "./pages/UserDashboard";
 import BrowseGrants from "./pages/BrowseGrants";
 import GrantDetails from "./pages/GrantDetails";
@@ -49,6 +52,9 @@ function AppContent() {
       <Route path="/grants/:id" element={<GrantDetails />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/features" element={<Features />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/faq" element={<FAQ />} />
       
       {/* Protected user routes */}
       <Route path="/home" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
