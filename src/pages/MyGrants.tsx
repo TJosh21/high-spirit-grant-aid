@@ -143,13 +143,13 @@ const MyGrants = () => {
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-5 md:space-y-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-foreground">My Grants</h1>
+          <h1 className="text-xl md:text-2xl font-bold">My Grants</h1>
           <Link to="/grants">
-            <Button size="sm" className="gap-1">
+            <Button size="sm" className="gap-2">
               <Plus className="h-4 w-4" />
-              Add
+              Add Grant
             </Button>
           </Link>
         </div>
@@ -232,7 +232,7 @@ const MyGrants = () => {
                           </Badge>
                         )}
                         {item.grant.amount_max && (
-                          <Badge variant="outline">
+                          <Badge variant="gold">
                             Up to ${item.grant.amount_max.toLocaleString()}
                           </Badge>
                         )}

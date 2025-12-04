@@ -148,9 +148,9 @@ const UserProfile = () => {
     <MobileLayout>
       <AppHeader showAuth={false} />
       
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-5 md:space-y-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-foreground">Profile</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Profile</h1>
           <Button variant="ghost" size="sm" onClick={signOut} className="gap-2 text-muted-foreground">
             <LogOut className="h-4 w-4" />
             Sign Out

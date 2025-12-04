@@ -111,46 +111,52 @@ const UserDashboard = () => {
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 py-6 space-y-6">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8 max-w-4xl mx-auto">
         {/* Welcome Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold">
             Welcome back, {firstName}!
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground text-base">
             Here's your grant activity overview
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="text-center">
-            <CardContent className="pt-4 pb-3 px-2">
-              <div className="flex justify-center mb-2">
-                <BookmarkCheck className="h-6 w-6 text-primary" />
+        <div className="grid grid-cols-3 gap-3 md:gap-4">
+          <Card className="text-center hover:shadow-card-hover">
+            <CardContent className="pt-5 pb-4 px-3">
+              <div className="flex justify-center mb-3">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <BookmarkCheck className="h-6 w-6 text-primary" />
+                </div>
               </div>
-              <div className="text-2xl font-bold text-foreground">{stats.savedGrants}</div>
-              <p className="text-xs text-muted-foreground">Saved</p>
+              <div className="text-3xl font-bold text-accent">{stats.savedGrants}</div>
+              <p className="text-sm text-muted-foreground mt-1">Saved</p>
             </CardContent>
           </Card>
           
-          <Card className="text-center">
-            <CardContent className="pt-4 pb-3 px-2">
-              <div className="flex justify-center mb-2">
-                <Send className="h-6 w-6 text-accent" />
+          <Card className="text-center hover:shadow-card-hover">
+            <CardContent className="pt-5 pb-4 px-3">
+              <div className="flex justify-center mb-3">
+                <div className="p-2 rounded-full bg-accent/10">
+                  <Send className="h-6 w-6 text-accent" />
+                </div>
               </div>
-              <div className="text-2xl font-bold text-foreground">{stats.appliedGrants}</div>
-              <p className="text-xs text-muted-foreground">Applied</p>
+              <div className="text-3xl font-bold text-accent">{stats.appliedGrants}</div>
+              <p className="text-sm text-muted-foreground mt-1">Applied</p>
             </CardContent>
           </Card>
           
-          <Card className="text-center">
-            <CardContent className="pt-4 pb-3 px-2">
-              <div className="flex justify-center mb-2">
-                <Trophy className="h-6 w-6 text-status-success" />
+          <Card className="text-center hover:shadow-card-hover">
+            <CardContent className="pt-5 pb-4 px-3">
+              <div className="flex justify-center mb-3">
+                <div className="p-2 rounded-full bg-status-success/10">
+                  <Trophy className="h-6 w-6 text-status-success" />
+                </div>
               </div>
-              <div className="text-2xl font-bold text-foreground">{stats.awardedGrants}</div>
-              <p className="text-xs text-muted-foreground">Awarded</p>
+              <div className="text-3xl font-bold text-accent">{stats.awardedGrants}</div>
+              <p className="text-sm text-muted-foreground mt-1">Awarded</p>
             </CardContent>
           </Card>
         </div>

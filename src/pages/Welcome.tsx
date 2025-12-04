@@ -93,25 +93,25 @@ const Welcome = () => {
         </section>
 
         {/* Quick Features */}
-        <section className="px-6 py-8 bg-background">
+        <section className="px-6 py-10 bg-background">
           <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
             <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
-                <Search className="h-5 w-5 text-primary" />
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-primary/10 flex items-center justify-center">
+                <Search className="h-6 w-6 text-primary" />
               </div>
-              <p className="text-xs text-muted-foreground">Find Grants</p>
+              <p className="text-sm font-medium text-foreground">Find Grants</p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-accent/10 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-accent" />
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-accent/10 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-accent" />
               </div>
-              <p className="text-xs text-muted-foreground">AI Coach</p>
+              <p className="text-sm font-medium text-foreground">AI Coach</p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-status-success/10 flex items-center justify-center">
-                <Award className="h-5 w-5 text-status-success" />
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-status-success/10 flex items-center justify-center">
+                <Award className="h-6 w-6 text-status-success" />
               </div>
-              <p className="text-xs text-muted-foreground">Win More</p>
+              <p className="text-sm font-medium text-foreground">Win More</p>
             </div>
           </div>
         </section>

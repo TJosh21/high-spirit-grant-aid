@@ -141,13 +141,13 @@ const AICoach = () => {
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 py-4 space-y-4">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-5 md:space-y-6 max-w-4xl mx-auto">
+        <div className="space-y-2">
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-accent" />
             AI Answer Coach
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-muted-foreground">
             Get help crafting winning grant application answers
           </p>
         </div>
