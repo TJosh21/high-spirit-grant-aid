@@ -13,96 +13,98 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Premium Royal Blue & Gold Design System */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 12%;
+    /* High Spirit Design System */
+    /* Soft light background #F4F6FB */
+    --background: 220 33% 97%;
+    --foreground: 220 90% 15%;
 
+    /* White cards */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    --card-foreground: 220 90% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover-foreground: 220 90% 15%;
 
-    /* Royal Blue #0A2A6A - main action color */
-    --primary: 221 83% 23%;
+    /* Royal Blue #041D4A - primary color */
+    --primary: 220 90% 15%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 221 83% 20%;
+    --primary-hover: 220 90% 20%;
 
-    /* Gold #D4AF37 - accents and highlights */
-    --accent: 45 62% 53%;
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 45 62% 48%;
+    /* Gold #F4AF32 - accents and highlights */
+    --accent: 43 90% 58%;
+    --accent-foreground: 220 90% 15%;
+    --accent-hover: 43 90% 52%;
 
-    /* Light Silver #F5F5F7 - subtle backgrounds */
-    --secondary: 240 14% 97%;
-    --secondary-foreground: 0 0% 12%;
+    /* Light backgrounds */
+    --secondary: 220 33% 94%;
+    --secondary-foreground: 220 90% 15%;
 
-    /* Slate Gray #6C6F75 - secondary text */
-    --muted: 240 14% 97%;
-    --muted-foreground: 220 5% 45%;
+    /* Muted text */
+    --muted: 220 20% 94%;
+    --muted-foreground: 220 20% 40%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Soft gray border #E1E1E4 */
-    --border: 240 8% 89%;
-    --input: 240 8% 89%;
-    --ring: 221 83% 23%;
+    /* Soft border */
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 43 90% 58%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Status colors for application states */
+    /* Status colors */
     --status-success: 142 76% 36%;
-    --status-warning: 38 92% 50%;
-    --status-info: 217 91% 60%;
+    --status-warning: 43 90% 58%;
+    --status-info: 220 90% 50%;
 
-    /* Premium shadows */
-    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06);
-    --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.08);
-    --shadow-premium: 0 8px 24px 0 rgb(10 42 106 / 0.12);
+    /* Premium shadows - softer and more elegant */
+    --shadow-card: 0 2px 8px 0 rgb(4 29 74 / 0.04), 0 1px 2px 0 rgb(4 29 74 / 0.02);
+    --shadow-card-hover: 0 8px 24px 0 rgb(4 29 74 / 0.08), 0 2px 4px 0 rgb(4 29 74 / 0.04);
+    --shadow-premium: 0 12px 32px 0 rgb(4 29 74 / 0.12), 0 4px 8px 0 rgb(4 29 74 / 0.06);
 
-    /* Gradients for beautiful UI */
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 23%) 0%, hsl(221 83% 35%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(45 62% 53%) 0%, hsl(45 100% 65%) 100%);
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 90% 15%) 0%, hsl(220 80% 25%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(43 90% 58%) 0%, hsl(43 95% 65%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 76% 50%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(221 100% 99%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 33% 99%) 100%);
   }
 
   .dark {
-    --background: 0 0% 12%;
-    --foreground: 0 0% 98%;
+    --background: 220 30% 10%;
+    --foreground: 220 20% 95%;
 
-    --card: 220 5% 16%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 25% 14%;
+    --card-foreground: 220 20% 95%;
 
-    --popover: 220 5% 16%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 25% 14%;
+    --popover-foreground: 220 20% 95%;
 
-    --primary: 221 83% 28%;
+    --primary: 220 80% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 221 83% 32%;
+    --primary-hover: 220 80% 50%;
 
-    --accent: 45 62% 53%;
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 45 62% 58%;
+    --accent: 43 90% 58%;
+    --accent-foreground: 220 30% 10%;
+    --accent-hover: 43 90% 65%;
 
-    --secondary: 220 5% 20%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 25% 18%;
+    --secondary-foreground: 220 20% 95%;
 
-    --muted: 220 5% 20%;
-    --muted-foreground: 220 5% 60%;
+    --muted: 220 25% 18%;
+    --muted-foreground: 220 15% 60%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 5% 28%;
-    --input: 220 5% 28%;
-    --ring: 221 83% 28%;
+    --border: 220 20% 22%;
+    --input: 220 20% 22%;
+    --ring: 43 90% 58%;
 
     /* Status colors for dark mode */
-    --status-success: 142 76% 40%;
-    --status-warning: 38 92% 55%;
-    --status-info: 217 91% 65%;
+    --status-success: 142 76% 45%;
+    --status-warning: 43 90% 60%;
+    --status-info: 220 80% 60%;
   }
 }
 
@@ -114,6 +116,8 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
     /* Safe areas for mobile devices */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -128,21 +132,26 @@ All colors MUST be HSL.
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    @apply text-primary;
   }
 
   h1 {
-    @apply text-2xl md:text-3xl lg:text-4xl font-bold text-foreground;
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
     letter-spacing: -0.02em;
   }
 
   h2 {
-    @apply text-xl md:text-2xl lg:text-3xl font-semibold text-foreground;
+    @apply text-xl md:text-2xl lg:text-3xl font-semibold;
     letter-spacing: -0.015em;
   }
 
   h3 {
-    @apply text-lg md:text-xl lg:text-2xl font-semibold text-foreground;
+    @apply text-lg md:text-xl lg:text-2xl font-semibold;
     letter-spacing: -0.01em;
+  }
+
+  p {
+    @apply text-base leading-relaxed;
   }
 
   /* Smooth animations */

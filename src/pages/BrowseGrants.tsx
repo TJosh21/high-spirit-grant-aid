@@ -152,7 +152,7 @@ const BrowseGrants = () => {
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-5 md:space-y-6 max-w-4xl mx-auto">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -284,8 +284,8 @@ const BrowseGrants = () => {
                       </p>
                     )}
 
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="gap-1">
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <Badge variant="gold" className="gap-1">
                         <DollarSign className="h-3 w-3" />
                         {formatAmount(grant.amount_min, grant.amount_max)}
                       </Badge>

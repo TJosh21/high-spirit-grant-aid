@@ -196,7 +196,7 @@ const GrantDetails = () => {
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-5 md:space-y-6 max-w-4xl mx-auto">
         {/* Back Button */}
         <Link to="/grants">
           <Button variant="ghost" size="sm" className="gap-2 -ml-2">
@@ -206,8 +206,8 @@ const GrantDetails = () => {
         </Link>
 
         {/* Grant Header */}
-        <div>
-          <h1 className="text-xl font-bold text-foreground mb-2">{grant.name}</h1>
+        <div className="space-y-2">
+          <h1 className="text-xl md:text-2xl font-bold">{grant.name}</h1>
           <p className="text-muted-foreground flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             {grant.sponsor_name}
@@ -215,25 +215,29 @@ const GrantDetails = () => {
         </div>
 
         {/* Key Info Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="p-3 flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-primary" />
+        <div className="grid grid-cols-2 gap-3 md:gap-4">
+          <Card className="hover:shadow-card-hover">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-full bg-accent/10">
+                <DollarSign className="h-5 w-5 text-accent" />
+              </div>
               <div>
                 <p className="text-xs text-muted-foreground">Amount</p>
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-bold text-accent">
                   {formatAmount(grant.amount_min, grant.amount_max)}
                 </p>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-3 flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-accent" />
+          <Card className="hover:shadow-card-hover">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-full bg-primary/10">
+                <Calendar className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <p className="text-xs text-muted-foreground">Deadline</p>
-                <p className="text-sm font-semibold">
+                <p className="text-sm font-bold">
                   {grant.deadline 
                     ? new Date(grant.deadline).toLocaleDateString() 
                     : 'Rolling'}
