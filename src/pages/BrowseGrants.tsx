@@ -153,28 +153,28 @@ const BrowseGrants = () => {
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-5 md:space-y-6 max-w-4xl mx-auto">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-5 md:space-y-6 max-w-4xl mx-auto">
         {/* Section Title */}
-        <div className="space-y-1">
-          <h1 className="text-xl md:text-2xl font-bold text-primary font-display">Available Grants</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Curated opportunities matched to small businesses
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary font-display">Available Grants</h1>
+          <p className="text-base md:text-lg text-muted-foreground">
+            Curated funding opportunities matched to your business
           </p>
         </div>
 
         {/* Search Bar - Full Width */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
           <Input
             placeholder="Search grants, keywords, or funders…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 pr-12 h-12 text-base rounded-2xl border-border/60 bg-card shadow-card focus:shadow-card-hover transition-shadow"
+            className="pl-14 pr-14 h-14 text-base rounded-2xl border-0 bg-card shadow-card hover:shadow-card-hover focus:shadow-premium focus:ring-2 focus:ring-accent/20 transition-all duration-300"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors"
+              className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-muted transition-colors"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -186,25 +186,25 @@ const BrowseGrants = () => {
           <Button 
             variant="outline" 
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-2 rounded-full px-5 h-10 border-border/60 hover:bg-secondary"
+            className="gap-2.5 rounded-full px-6 h-11 border-border/50 hover:bg-card hover:shadow-card transition-all duration-300"
           >
             <SlidersHorizontal className="h-4 w-4" />
-            Filters
+            <span className="font-medium">Filters</span>
             {hasActiveFilters && (
-              <span className="ml-1 h-5 w-5 rounded-full bg-accent text-primary text-xs flex items-center justify-center font-bold">
+              <span className="ml-0.5 h-5 w-5 rounded-full bg-accent text-primary text-xs flex items-center justify-center font-bold animate-pulse">
                 !
               </span>
             )}
           </Button>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-primary">
                 Clear all
               </Button>
             )}
-            <span className="text-sm text-muted-foreground">
-              {filteredGrants.length} grant{filteredGrants.length !== 1 ? 's' : ''}
+            <span className="text-sm text-muted-foreground font-medium">
+              {filteredGrants.length} grant{filteredGrants.length !== 1 ? 's' : ''} found
             </span>
           </div>
         </div>
@@ -265,55 +265,58 @@ const BrowseGrants = () => {
         )}
 
         {/* Grants List - Card Style */}
-        <div className="space-y-4">
+        <div className="space-y-4 md:space-y-5">
           {filteredGrants.map((grant) => {
             const deadlineStatus = getDeadlineStatus(grant.deadline);
             const allTags = [...(grant.industry_tags || []), ...(grant.geography_tags || [])].slice(0, 3);
             
             return (
               <Link key={grant.id} to={`/grants/${grant.id}`}>
-                <Card className="hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 overflow-hidden rounded-2xl shadow-card">
-                  <CardContent className="p-5 md:p-6">
-                    {/* Header Row: Amount & Deadline */}
-                    <div className="flex items-center justify-between mb-4">
-                      <Badge className="bg-accent text-primary font-semibold px-3 py-1.5 text-sm rounded-full border-0">
-                        {formatAmount(grant.amount_min, grant.amount_max)}
-                      </Badge>
-                      <Badge className={`${deadlineStatus.color} px-3 py-1 text-xs font-medium rounded-full border-0`}>
-                        {deadlineStatus.label}
-                      </Badge>
-                    </div>
-
-                    {/* Title & Sponsor */}
-                    <div className="mb-3">
-                      <h3 className="font-bold text-base md:text-lg text-primary line-clamp-2 mb-1">
-                        {grant.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {grant.sponsor_name}
-                      </p>
-                    </div>
-
-                    {/* Description */}
-                    {grant.short_description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                        {grant.short_description}
-                      </p>
-                    )}
-
-                    {/* Tags & Arrow */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-wrap gap-2">
-                        {allTags.map((tag, idx) => (
-                          <Badge 
-                            key={idx} 
-                            className="bg-primary/10 text-primary border-0 text-xs font-medium px-2.5 py-0.5 rounded-full"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
+                <Card className="hover:shadow-premium hover:-translate-y-1 transition-all duration-300 overflow-hidden rounded-2xl shadow-card border-0 group">
+                  <CardContent className="p-5 md:p-7 relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative">
+                      {/* Header Row: Amount & Deadline */}
+                      <div className="flex items-center justify-between mb-4">
+                        <Badge className="bg-accent text-primary font-bold px-4 py-2 text-sm rounded-full border-0 shadow-sm">
+                          {formatAmount(grant.amount_min, grant.amount_max)}
+                        </Badge>
+                        <Badge className={`${deadlineStatus.color} px-3.5 py-1.5 text-xs font-semibold rounded-full border-0`}>
+                          {deadlineStatus.label}
+                        </Badge>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground/40 flex-shrink-0" />
+
+                      {/* Title & Sponsor */}
+                      <div className="mb-3">
+                        <h3 className="font-bold text-lg md:text-xl text-primary line-clamp-2 mb-1.5 group-hover:text-primary/90 transition-colors">
+                          {grant.name}
+                        </h3>
+                        <p className="text-sm md:text-base text-muted-foreground font-medium">
+                          {grant.sponsor_name}
+                        </p>
+                      </div>
+
+                      {/* Description */}
+                      {grant.short_description && (
+                        <p className="text-sm md:text-base text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+                          {grant.short_description}
+                        </p>
+                      )}
+
+                      {/* Tags & Arrow */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap gap-2">
+                          {allTags.map((tag, idx) => (
+                            <Badge 
+                              key={idx} 
+                              className="bg-primary/8 text-primary border-0 text-xs font-medium px-3 py-1 rounded-full"
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
