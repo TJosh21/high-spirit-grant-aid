@@ -293,27 +293,27 @@ const GrantDetails = () => {
         </div>
 
         {/* Header Card */}
-        <Card className="overflow-hidden shadow-premium rounded-2xl border-0">
+        <Card className="overflow-hidden shadow-premium rounded-3xl border-0">
           <CardContent className="p-0">
             <div className="flex flex-col md:flex-row">
               {/* Left Side - Grant Info */}
-              <div className="flex-1 p-6 md:p-8">
+              <div className="flex-1 p-6 md:p-8 lg:p-10">
                 {categoryLabel && (
-                  <Badge className="bg-primary/10 text-primary border-0 text-xs font-medium mb-3 rounded-full px-3">
+                  <Badge className="bg-primary/10 text-primary border-0 text-xs font-semibold mb-4 rounded-full px-4 py-1.5">
                     {categoryLabel}
                   </Badge>
                 )}
-                <h1 className="text-xl md:text-2xl font-bold text-primary mb-3 font-display leading-tight">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-4 font-display leading-tight">
                   {grant.name}
                 </h1>
-                <div className="space-y-2">
-                  <p className="text-muted-foreground flex items-center gap-2">
-                    <Building2 className="h-4 w-4 flex-shrink-0" />
+                <div className="space-y-3">
+                  <p className="text-muted-foreground flex items-center gap-3 text-base md:text-lg">
+                    <Building2 className="h-5 w-5 flex-shrink-0 text-primary/60" />
                     {grant.sponsor_name}
                   </p>
                   {grant.geography_tags?.[0] && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <p className="text-muted-foreground flex items-center gap-3 text-sm md:text-base">
+                      <MapPin className="h-5 w-5 flex-shrink-0 text-primary/60" />
                       {grant.geography_tags[0]}
                     </p>
                   )}
@@ -322,33 +322,33 @@ const GrantDetails = () => {
 
               {/* Right Side - Key Metrics */}
               <div 
-                className="md:w-72 p-6 md:p-8 border-t md:border-t-0 md:border-l border-border/30"
-                style={{ background: 'linear-gradient(180deg, hsl(220 33% 98%) 0%, hsl(220 33% 96%) 100%)' }}
+                className="md:w-80 p-6 md:p-8 lg:p-10 border-t md:border-t-0 md:border-l border-border/20"
+                style={{ background: 'linear-gradient(180deg, hsl(220 33% 98%) 0%, hsl(220 33% 95%) 100%)' }}
               >
-                <div className="space-y-5">
+                <div className="space-y-6">
                   {/* Amount */}
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 font-medium">Grant Amount</p>
-                    <p className="text-2xl md:text-3xl font-bold text-accent font-display">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Grant Amount</p>
+                    <p className="text-3xl md:text-4xl font-bold text-accent font-display">
                       {formatAmountFull(grant.amount_min, grant.amount_max)}
                     </p>
                   </div>
 
                   {/* Deadline */}
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 font-medium">Deadline</p>
-                    <Badge className={`${deadlineInfo.isOpen ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'} border-0 px-3 py-1.5 rounded-full`}>
-                      <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Deadline</p>
+                    <Badge className={`${deadlineInfo.isOpen ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'} border-0 px-4 py-2 rounded-full text-sm font-semibold`}>
+                      <Calendar className="h-4 w-4 mr-2" />
                       {deadlineInfo.label}
                     </Badge>
                   </div>
 
                   {/* Status */}
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 font-medium">Status</p>
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${deadlineInfo.isOpen ? 'bg-status-success' : 'bg-destructive'}`} />
-                      <span className={`text-sm font-semibold ${deadlineInfo.isOpen ? 'text-status-success' : 'text-destructive'}`}>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-semibold">Status</p>
+                    <div className="flex items-center gap-2.5">
+                      <span className={`w-3 h-3 rounded-full ${deadlineInfo.isOpen ? 'bg-status-success animate-pulse' : 'bg-destructive'}`} />
+                      <span className={`text-base font-bold ${deadlineInfo.isOpen ? 'text-status-success' : 'text-destructive'}`}>
                         {deadlineInfo.isOpen ? 'Open' : 'Closed'}
                       </span>
                     </div>

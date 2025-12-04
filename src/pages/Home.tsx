@@ -122,31 +122,32 @@ export default function Home() {
       {/* Hero Card Section */}
       <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 max-w-5xl mx-auto">
         <ScrollReveal>
-          <Card className="overflow-hidden shadow-premium border-0">
+          <Card className="overflow-hidden shadow-premium border-0 rounded-3xl">
             <div 
-              className="relative p-6 md:p-10"
+              className="relative p-6 md:p-10 lg:p-12"
               style={{ 
-                background: 'linear-gradient(135deg, hsl(220 90% 15%) 0%, hsl(220 80% 25%) 50%, hsl(220 70% 30%) 100%)' 
+                background: 'linear-gradient(135deg, hsl(220 90% 15%) 0%, hsl(220 85% 20%) 50%, hsl(220 75% 28%) 100%)' 
               }}
             >
               {/* Animated Background Elements */}
               <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/5 blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-accent/10 blur-2xl"></div>
+                <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/5 blur-3xl" />
+                <div className="absolute -bottom-10 -left-10 w-60 h-60 rounded-full bg-accent/10 blur-2xl" />
+                <div className="absolute top-1/2 right-1/4 w-32 h-32 rounded-full bg-accent/5 blur-xl" />
               </div>
               
               <div className="relative z-10">
                 {/* AI Badge */}
-                <Badge className="bg-white/10 text-white border-white/20 backdrop-blur-sm mb-4 px-4 py-1.5">
+                <Badge className="bg-white/15 text-white border-white/20 backdrop-blur-sm mb-5 px-4 py-2 rounded-full text-xs font-semibold tracking-wide">
                   <Sparkles className="h-3.5 w-3.5 mr-2" />
                   AI-Powered Grant Assistant
                 </Badge>
                 
                 {/* Welcome Message */}
-                <h1 className="text-2xl md:text-4xl font-bold text-white mb-3 font-display">
-                  Welcome back, {profile?.name?.split(' ')[0] || 'there'}! 👋
+                <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display leading-tight">
+                  Welcome back, <span className="text-accent">{profile?.name?.split(' ')[0] || 'there'}</span>! 👋
                 </h1>
-                <p className="text-white/80 text-base md:text-lg max-w-xl">
+                <p className="text-white/75 text-base md:text-lg lg:text-xl max-w-2xl leading-relaxed">
                   Your intelligent assistant is ready to help you discover and secure the perfect funding opportunities.
                 </p>
               </div>
@@ -156,11 +157,11 @@ export default function Home() {
 
         {/* Stats Cards */}
         <ScrollReveal delay={0.1}>
-          <div className="grid grid-cols-3 gap-3 md:gap-4 mt-6">
+          <div className="grid grid-cols-3 gap-3 md:gap-5 mt-6 md:mt-8">
             {[
-              { label: 'Saved', value: stats.saved, icon: Bookmark, color: 'bg-accent' },
-              { label: 'Applied', value: stats.applied, icon: FileText, color: 'bg-primary' },
-              { label: 'Awarded', value: stats.awarded, icon: Award, color: 'bg-status-success' },
+              { label: 'Saved', value: stats.saved, icon: Bookmark, bgColor: 'bg-accent/15', iconBg: 'bg-accent', textColor: 'text-accent' },
+              { label: 'Applied', value: stats.applied, icon: FileText, bgColor: 'bg-primary/10', iconBg: 'bg-primary', textColor: 'text-primary' },
+              { label: 'Awarded', value: stats.awarded, icon: Award, bgColor: 'bg-status-success/15', iconBg: 'bg-status-success', textColor: 'text-status-success' },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -168,18 +169,21 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1, duration: 0.4 }}
               >
-                <Card className="shadow-card hover:shadow-card-hover transition-all rounded-2xl">
-                  <CardContent className="p-4 md:p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                        <stat.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                <Card className="shadow-card hover:shadow-premium transition-all duration-300 rounded-2xl border-0 overflow-hidden group">
+                  <CardContent className="p-4 md:p-6 relative">
+                    <div className={`absolute inset-0 ${stat.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                    <div className="relative">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl ${stat.iconBg} flex items-center justify-center shadow-sm`}>
+                          <stat.icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-2xl md:text-3xl font-bold text-primary font-display">
-                      {stat.value}
-                    </div>
-                    <div className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                      {stat.label}
+                      <div className={`text-3xl md:text-4xl font-bold ${stat.textColor} font-display`}>
+                        {stat.value}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1 font-medium">
+                        {stat.label}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -190,9 +194,9 @@ export default function Home() {
 
         {/* Quick Actions */}
         <ScrollReveal delay={0.2}>
-          <div className="mt-8">
-            <h2 className="text-lg md:text-xl font-bold text-primary mb-4 font-display">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
+          <div className="mt-8 md:mt-10">
+            <h2 className="text-lg md:text-xl font-bold text-primary mb-4 md:mb-5 font-display">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-3 md:gap-5">
               {quickActions.map((action, index) => (
                 <motion.div
                   key={action.title}
@@ -201,17 +205,20 @@ export default function Home() {
                   transition={{ delay: 0.2 + index * 0.05, duration: 0.4 }}
                 >
                   <Link to={action.href}>
-                    <Card className="h-full shadow-card hover:shadow-premium hover:-translate-y-1 transition-all duration-300 rounded-2xl group cursor-pointer">
-                      <CardContent className="p-4 md:p-5">
-                        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-${action.color}/10 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
-                          <action.icon className={`h-6 w-6 md:h-7 md:w-7 text-${action.color}`} />
+                    <Card className="h-full shadow-card hover:shadow-premium hover:-translate-y-1.5 transition-all duration-300 rounded-2xl group cursor-pointer border-0 overflow-hidden">
+                      <CardContent className="p-5 md:p-6 relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-secondary/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative">
+                          <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-${action.color}/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                            <action.icon className={`h-7 w-7 md:h-8 md:w-8 text-${action.color}`} />
+                          </div>
+                          <h3 className="font-bold text-primary text-base md:text-lg mb-1.5">
+                            {action.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {action.description}
+                          </p>
                         </div>
-                        <h3 className="font-semibold text-primary text-sm md:text-base mb-1">
-                          {action.title}
-                        </h3>
-                        <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">
-                          {action.description}
-                        </p>
                       </CardContent>
                     </Card>
                   </Link>
@@ -293,26 +300,33 @@ export default function Home() {
         {/* CTA Banner */}
         {stats.saved === 0 && (
           <ScrollReveal delay={0.5}>
-            <Card className="mt-8 overflow-hidden border-0 shadow-premium">
+            <Card className="mt-8 md:mt-10 overflow-hidden border-0 shadow-premium rounded-3xl">
               <div 
-                className="p-6 md:p-8 text-center"
+                className="p-8 md:p-10 lg:p-12 text-center relative"
                 style={{ 
-                  background: 'linear-gradient(135deg, hsl(43 90% 58%) 0%, hsl(43 95% 65%) 100%)' 
+                  background: 'linear-gradient(135deg, hsl(43 90% 58%) 0%, hsl(43 95% 65%) 50%, hsl(43 90% 60%) 100%)' 
                 }}
               >
-                <h3 className="text-lg md:text-xl font-bold text-primary mb-2 font-display">
-                  Start Your Grant Journey
-                </h3>
-                <p className="text-primary/80 text-sm md:text-base mb-4">
-                  Browse our curated collection of grants matched to your business.
-                </p>
-                <Button 
-                  onClick={() => navigate('/grants')}
-                  className="bg-primary text-white hover:bg-primary-hover gap-2"
-                >
-                  <Target className="h-4 w-4" />
-                  Browse Grants
-                </Button>
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+                  <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-primary/5 blur-xl" />
+                </div>
+                <div className="relative">
+                  <h3 className="text-xl md:text-2xl font-bold text-primary mb-3 font-display">
+                    Start Your Grant Journey
+                  </h3>
+                  <p className="text-primary/75 text-base md:text-lg mb-6 max-w-md mx-auto">
+                    Browse our curated collection of grants matched to your business profile.
+                  </p>
+                  <Button 
+                    onClick={() => navigate('/grants')}
+                    size="lg"
+                    className="bg-primary text-white hover:bg-primary-hover gap-2 rounded-full px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Target className="h-5 w-5" />
+                    Browse Grants
+                  </Button>
+                </div>
               </div>
             </Card>
           </ScrollReveal>
