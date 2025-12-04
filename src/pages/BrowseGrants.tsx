@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { SearchBar } from '@/components/ui/search-bar';
+import { SectionHeader } from '@/components/ui/section-header';
+import { SegmentedTabs } from '@/components/ui/segmented-tabs';
+import { GrantCard } from '@/components/ui/grant-card';
+import { GrantsListSkeleton } from '@/components/ui/grant-card-skeleton';
 import {
   Select,
   SelectContent,
@@ -13,15 +17,14 @@ import {
 } from '@/components/ui/select';
 import { 
   Search, 
-  Filter, 
   ChevronRight,
-  X,
-  SlidersHorizontal
+  SlidersHorizontal,
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import MobileLayout from '@/components/MobileLayout';
 import AppHeader from '@/components/AppHeader';
-import { LoadingScreen, GrantsListLoading } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 interface Grant {
   id: string;
@@ -33,14 +36,17 @@ interface Grant {
   deadline: string | null;
   industry_tags: string[];
   geography_tags: string[];
+  sponsor_type?: string | null;
 }
 
 const BrowseGrants = () => {
+  const navigate = useNavigate();
   const [grants, setGrants] = useState<Grant[]>([]);
   const [filteredGrants, setFilteredGrants] = useState<Grant[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
   const [filters, setFilters] = useState({
     industry: '',
     amountRange: '',
@@ -59,7 +65,7 @@ const BrowseGrants = () => {
     try {
       const { data, error } = await supabase
         .from('grants')
-        .select('id, name, sponsor_name, short_description, amount_min, amount_max, deadline, industry_tags, geography_tags')
+        .select('id, name, sponsor_name, short_description, amount_min, amount_max, deadline, industry_tags, geography_tags, sponsor_type')
         .eq('status', 'open')
         .order('deadline', { ascending: true, nullsFirst: false });
 
@@ -75,7 +81,6 @@ const BrowseGrants = () => {
   const applyFilters = () => {
     let result = [...grants];
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(g => 
@@ -85,14 +90,12 @@ const BrowseGrants = () => {
       );
     }
 
-    // Industry filter
     if (filters.industry) {
       result = result.filter(g => 
         g.industry_tags?.some(tag => tag.toLowerCase().includes(filters.industry.toLowerCase()))
       );
     }
 
-    // Amount filter
     if (filters.amountRange) {
       result = result.filter(g => {
         const max = g.amount_max || 0;
@@ -105,7 +108,6 @@ const BrowseGrants = () => {
       });
     }
 
-    // Deadline filter
     if (filters.deadline) {
       const now = new Date();
       result = result.filter(g => {
@@ -131,58 +133,48 @@ const BrowseGrants = () => {
 
   const hasActiveFilters = searchQuery || filters.industry || filters.amountRange || filters.deadline;
 
-  const formatAmount = (min: number | null, max: number | null) => {
-    if (!min && !max) return 'Amount varies';
-    if (min && max) return `$${(min/1000).toFixed(0)}k–$${(max/1000).toFixed(0)}k`;
-    if (max) return `Up to $${max >= 1000 ? `${(max/1000).toFixed(0)}k` : max.toLocaleString()}`;
-    return `From $${min?.toLocaleString()}`;
-  };
-
-  const getDeadlineStatus = (deadline: string | null) => {
-    if (!deadline) return { label: 'Rolling', color: 'bg-status-success/15 text-status-success' };
-    const days = Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    if (days <= 0) return { label: 'Expired', color: 'bg-destructive/15 text-destructive' };
-    if (days <= 7) return { label: `${days} days left`, color: 'bg-destructive/15 text-destructive' };
-    if (days <= 14) return { label: `${days} days left`, color: 'bg-accent/20 text-accent-foreground' };
-    return { label: `${days} days left`, color: 'bg-status-success/15 text-status-success' };
-  };
-
-  if (loading) return <LoadingScreen />;
+  // Loading state with skeleton
+  if (loading) {
+    return (
+      <MobileLayout>
+        <AppHeader />
+        <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-5 md:space-y-6 max-w-5xl mx-auto">
+          <SectionHeader
+            title="Available Grants"
+            description="Curated funding opportunities matched to your business"
+            size="lg"
+          />
+          <div className="h-14 rounded-full bg-card shadow-card animate-pulse" />
+          <div className="h-11 w-32 rounded-full bg-card shadow-card animate-pulse" />
+          <GrantsListSkeleton count={6} />
+        </div>
+      </MobileLayout>
+    );
+  }
 
   return (
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-5 md:space-y-6 max-w-4xl mx-auto">
-        {/* Section Title */}
-        <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-primary font-display">Available Grants</h1>
-          <p className="text-base md:text-lg text-muted-foreground">
-            Curated funding opportunities matched to your business
-          </p>
-        </div>
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-5 md:space-y-6 max-w-5xl mx-auto">
+        {/* Section Header */}
+        <SectionHeader
+          title="Available Grants"
+          description="Curated funding opportunities matched to your business"
+          size="lg"
+        />
 
-        {/* Search Bar - Full Width */}
-        <div className="relative">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
-          <Input
-            placeholder="Search grants, keywords, or funders…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-14 pr-14 h-14 text-base rounded-2xl border-0 bg-card shadow-card hover:shadow-card-hover focus:shadow-premium focus:ring-2 focus:ring-accent/20 transition-all duration-300"
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-muted transition-colors"
-            >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-        </div>
+        {/* Search Bar */}
+        <SearchBar
+          placeholder="Search grants, keywords, or funders…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onClear={() => setSearchQuery('')}
+          size="lg"
+        />
 
-        {/* Filter Toggle - Pill Style */}
-        <div className="flex items-center justify-between">
+        {/* Filter Row */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <Button 
             variant="outline" 
             onClick={() => setShowFilters(!showFilters)}
@@ -191,7 +183,7 @@ const BrowseGrants = () => {
             <SlidersHorizontal className="h-4 w-4" />
             <span className="font-medium">Filters</span>
             {hasActiveFilters && (
-              <span className="ml-0.5 h-5 w-5 rounded-full bg-accent text-primary text-xs flex items-center justify-center font-bold animate-pulse">
+              <span className="ml-0.5 h-5 w-5 rounded-full bg-accent text-primary text-xs flex items-center justify-center font-bold">
                 !
               </span>
             )}
@@ -211,12 +203,12 @@ const BrowseGrants = () => {
 
         {/* Filters Panel */}
         {showFilters && (
-          <Card className="shadow-card rounded-2xl">
+          <Card className="shadow-card rounded-2xl border-border/30 animate-fade-in-up">
             <CardContent className="pt-5 pb-5 space-y-4">
               <div>
                 <label className="text-sm font-medium mb-2 block text-primary">Industry</label>
                 <Select value={filters.industry} onValueChange={(v) => setFilters(f => ({ ...f, industry: v }))}>
-                  <SelectTrigger className="rounded-xl h-11">
+                  <SelectTrigger className="rounded-xl h-11 border-border/50">
                     <SelectValue placeholder="All industries" />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,7 +226,7 @@ const BrowseGrants = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block text-primary">Amount</label>
                 <Select value={filters.amountRange} onValueChange={(v) => setFilters(f => ({ ...f, amountRange: v }))}>
-                  <SelectTrigger className="rounded-xl h-11">
+                  <SelectTrigger className="rounded-xl h-11 border-border/50">
                     <SelectValue placeholder="Any amount" />
                   </SelectTrigger>
                   <SelectContent>
@@ -249,7 +241,7 @@ const BrowseGrants = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block text-primary">Deadline</label>
                 <Select value={filters.deadline} onValueChange={(v) => setFilters(f => ({ ...f, deadline: v }))}>
-                  <SelectTrigger className="rounded-xl h-11">
+                  <SelectTrigger className="rounded-xl h-11 border-border/50">
                     <SelectValue placeholder="Any deadline" />
                   </SelectTrigger>
                   <SelectContent>
@@ -264,80 +256,32 @@ const BrowseGrants = () => {
           </Card>
         )}
 
-        {/* Grants List - Card Style */}
-        <div className="space-y-4 md:space-y-5">
-          {filteredGrants.map((grant) => {
-            const deadlineStatus = getDeadlineStatus(grant.deadline);
-            const allTags = [...(grant.industry_tags || []), ...(grant.geography_tags || [])].slice(0, 3);
-            
-            return (
-              <Link key={grant.id} to={`/grants/${grant.id}`}>
-                <Card className="hover:shadow-premium hover:-translate-y-1 transition-all duration-300 overflow-hidden rounded-2xl shadow-card border-0 group">
-                  <CardContent className="p-5 md:p-7 relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="relative">
-                      {/* Header Row: Amount & Deadline */}
-                      <div className="flex items-center justify-between mb-4">
-                        <Badge className="bg-accent text-primary font-bold px-4 py-2 text-sm rounded-full border-0 shadow-sm">
-                          {formatAmount(grant.amount_min, grant.amount_max)}
-                        </Badge>
-                        <Badge className={`${deadlineStatus.color} px-3.5 py-1.5 text-xs font-semibold rounded-full border-0`}>
-                          {deadlineStatus.label}
-                        </Badge>
-                      </div>
-
-                      {/* Title & Sponsor */}
-                      <div className="mb-3">
-                        <h3 className="font-bold text-lg md:text-xl text-primary line-clamp-2 mb-1.5 group-hover:text-primary/90 transition-colors">
-                          {grant.name}
-                        </h3>
-                        <p className="text-sm md:text-base text-muted-foreground font-medium">
-                          {grant.sponsor_name}
-                        </p>
-                      </div>
-
-                      {/* Description */}
-                      {grant.short_description && (
-                        <p className="text-sm md:text-base text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-                          {grant.short_description}
-                        </p>
-                      )}
-
-                      {/* Tags & Arrow */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap gap-2">
-                          {allTags.map((tag, idx) => (
-                            <Badge 
-                              key={idx} 
-                              className="bg-primary/8 text-primary border-0 text-xs font-medium px-3 py-1 rounded-full"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-
-          {filteredGrants.length === 0 && (
-            <Card className="shadow-card rounded-2xl">
-              <CardContent className="py-16 text-center">
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
-                  <Search className="h-8 w-8 text-muted-foreground/50" />
-                </div>
-                <h3 className="font-semibold text-lg text-primary mb-2">No grants found</h3>
-                <p className="text-muted-foreground">
-                  Try adjusting your search or filters
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {/* Grants Grid */}
+        {filteredGrants.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredGrants.map((grant) => (
+              <GrantCard
+                key={grant.id}
+                title={grant.name}
+                funder={grant.sponsor_name}
+                amountMin={grant.amount_min}
+                amountMax={grant.amount_max}
+                deadline={grant.deadline}
+                category={grant.sponsor_type}
+                tags={[...(grant.industry_tags || []), ...(grant.geography_tags || [])]}
+                onClick={() => navigate(`/grants/${grant.id}`)}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Search}
+            title="No grants found"
+            description="Try adjusting your search or filters to find more opportunities"
+            actionLabel="Clear Filters"
+            onAction={clearFilters}
+          />
+        )}
       </div>
     </MobileLayout>
   );
