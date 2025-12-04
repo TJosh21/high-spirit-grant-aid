@@ -14,9 +14,6 @@ import {
 import { 
   Search, 
   Filter, 
-  Calendar, 
-  DollarSign,
-  Building2,
   ChevronRight,
   X
 } from 'lucide-react';
@@ -140,10 +137,13 @@ const BrowseGrants = () => {
     return `From $${min?.toLocaleString()}`;
   };
 
-  const getDaysUntilDeadline = (deadline: string | null) => {
-    if (!deadline) return null;
+  const getDeadlineStatus = (deadline: string | null) => {
+    if (!deadline) return { label: 'Rolling', variant: 'secondary' as const, color: 'bg-status-success/10 text-status-success' };
     const days = Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    return days;
+    if (days <= 0) return { label: 'Expired', variant: 'destructive' as const, color: 'bg-destructive/10 text-destructive' };
+    if (days <= 7) return { label: `${days} days left`, variant: 'destructive' as const, color: 'bg-destructive/10 text-destructive' };
+    if (days <= 14) return { label: `${days} days left`, variant: 'gold' as const, color: 'bg-amber-100 text-amber-700' };
+    return { label: `${days} days left`, variant: 'secondary' as const, color: 'bg-status-success/10 text-status-success' };
   };
 
   if (loading) return <LoadingScreen />;
@@ -153,44 +153,43 @@ const BrowseGrants = () => {
       <AppHeader />
       
       <div className="px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-5 md:space-y-6 max-w-4xl mx-auto">
-        {/* Search Bar */}
+        {/* Search Bar - Full Width */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Search grants..."
+            placeholder="Search grants, keywords, or funders…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-12 pr-12 h-12 text-base rounded-xl border-border/60 bg-card shadow-card focus:shadow-card-hover transition-shadow"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
         </div>
 
-        {/* Filter Toggle */}
+        {/* Filter Toggle - Pill Style */}
         <div className="flex items-center justify-between">
           <Button 
             variant="outline" 
-            size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-2"
+            className="gap-2 rounded-full px-5 h-10 border-border/60"
           >
             <Filter className="h-4 w-4" />
             Filters
             {hasActiveFilters && (
-              <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
+              <span className="ml-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-bold">
                 !
-              </Badge>
+              </span>
             )}
           </Button>
           
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
               Clear all
             </Button>
           )}
@@ -198,12 +197,12 @@ const BrowseGrants = () => {
 
         {/* Filters Panel */}
         {showFilters && (
-          <Card>
-            <CardContent className="pt-4 space-y-4">
+          <Card className="shadow-card">
+            <CardContent className="pt-5 pb-5 space-y-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Industry</label>
                 <Select value={filters.industry} onValueChange={(v) => setFilters(f => ({ ...f, industry: v }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="All industries" />
                   </SelectTrigger>
                   <SelectContent>
@@ -221,7 +220,7 @@ const BrowseGrants = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block">Amount</label>
                 <Select value={filters.amountRange} onValueChange={(v) => setFilters(f => ({ ...f, amountRange: v }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Any amount" />
                   </SelectTrigger>
                   <SelectContent>
@@ -236,7 +235,7 @@ const BrowseGrants = () => {
               <div>
                 <label className="text-sm font-medium mb-2 block">Deadline</label>
                 <Select value={filters.deadline} onValueChange={(v) => setFilters(f => ({ ...f, deadline: v }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Any deadline" />
                   </SelectTrigger>
                   <SelectContent>
@@ -251,61 +250,71 @@ const BrowseGrants = () => {
           </Card>
         )}
 
-        {/* Results Count */}
-        <p className="text-sm text-muted-foreground">
-          {filteredGrants.length} grant{filteredGrants.length !== 1 ? 's' : ''} found
-        </p>
+        {/* Section Title */}
+        <div className="space-y-1 pt-2">
+          <h2 className="text-xl md:text-2xl font-bold">Available Grants</h2>
+          <p className="text-muted-foreground">
+            Curated opportunities matched to small businesses
+          </p>
+          <p className="text-sm text-muted-foreground/70 pt-1">
+            {filteredGrants.length} grant{filteredGrants.length !== 1 ? 's' : ''} found
+          </p>
+        </div>
 
-        {/* Grants List */}
-        <div className="space-y-3">
+        {/* Grants List - Card Style */}
+        <div className="space-y-4">
           {filteredGrants.map((grant) => {
-            const daysLeft = getDaysUntilDeadline(grant.deadline);
+            const deadlineStatus = getDeadlineStatus(grant.deadline);
+            const allTags = [...(grant.industry_tags || []), ...(grant.geography_tags || [])].slice(0, 4);
             
             return (
               <Link key={grant.id} to={`/grants/${grant.id}`}>
-                <Card className="hover:shadow-card-hover transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground line-clamp-1">
-                          {grant.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Building2 className="h-3 w-3" />
-                          {grant.sponsor_name}
-                        </p>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <Card className="hover:shadow-premium hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                  <CardContent className="p-5 md:p-6">
+                    {/* Header Row: Amount & Deadline */}
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge className="bg-accent text-primary font-semibold px-3 py-1 text-sm rounded-full">
+                        {formatAmount(grant.amount_min, grant.amount_max)}
+                      </Badge>
+                      <Badge className={`${deadlineStatus.color} px-3 py-1 text-xs font-medium rounded-full border-0`}>
+                        {deadlineStatus.label}
+                      </Badge>
                     </div>
 
+                    {/* Title & Sponsor */}
+                    <div className="mb-3">
+                      <h3 className="font-bold text-lg text-primary line-clamp-2 mb-1">
+                        {grant.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {grant.sponsor_name}
+                      </p>
+                    </div>
+
+                    {/* Description */}
                     {grant.short_description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                         {grant.short_description}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <Badge variant="gold" className="gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        {formatAmount(grant.amount_min, grant.amount_max)}
-                      </Badge>
-                      
-                      {daysLeft !== null && (
-                        <Badge 
-                          variant={daysLeft <= 7 ? "destructive" : daysLeft <= 14 ? "outline" : "secondary"}
-                          className="gap-1"
-                        >
-                          <Calendar className="h-3 w-3" />
-                          {daysLeft <= 0 ? 'Expired' : `${daysLeft} days left`}
-                        </Badge>
-                      )}
-                      
-                      {!grant.deadline && (
-                        <Badge variant="secondary" className="gap-1">
-                          <Calendar className="h-3 w-3" />
-                          Rolling
-                        </Badge>
-                      )}
+                    {/* Tags */}
+                    {allTags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {allTags.map((tag, idx) => (
+                          <Badge 
+                            key={idx} 
+                            className="bg-primary/10 text-primary border-0 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Arrow Indicator */}
+                    <div className="flex justify-end mt-3">
+                      <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
                     </div>
                   </CardContent>
                 </Card>
@@ -314,11 +323,13 @@ const BrowseGrants = () => {
           })}
 
           {filteredGrants.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <h3 className="font-medium text-foreground mb-2">No grants found</h3>
-                <p className="text-sm text-muted-foreground">
+            <Card className="shadow-card">
+              <CardContent className="py-16 text-center">
+                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground/50" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">No grants found</h3>
+                <p className="text-muted-foreground">
                   Try adjusting your search or filters
                 </p>
               </CardContent>
