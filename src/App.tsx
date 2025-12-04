@@ -13,6 +13,8 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 // New mobile-first pages
 import Welcome from "./pages/Welcome";
 import AuthPage from "./pages/AuthPage";
+import Pricing from "./pages/Pricing";
+import Features from "./pages/Features";
 import UserDashboard from "./pages/UserDashboard";
 import BrowseGrants from "./pages/BrowseGrants";
 import GrantDetails from "./pages/GrantDetails";
@@ -45,6 +47,8 @@ function AppContent() {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/grants" element={<BrowseGrants />} />
       <Route path="/grants/:id" element={<GrantDetails />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/features" element={<Features />} />
       
       {/* Protected user routes */}
       <Route path="/home" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
