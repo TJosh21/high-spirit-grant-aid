@@ -4,7 +4,7 @@
 
 /* Smooth transitions for theme switching */
 * {
-  @apply transition-colors duration-300;
+  @apply transition-colors duration-200;
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -34,6 +34,7 @@ All colors MUST be HSL.
     --accent: 43 90% 58%;
     --accent-foreground: 220 90% 15%;
     --accent-hover: 43 90% 52%;
+    --accent-glow: 43 90% 70%;
 
     /* Light backgrounds */
     --secondary: 220 33% 94%;
@@ -41,14 +42,14 @@ All colors MUST be HSL.
 
     /* Muted text */
     --muted: 220 20% 94%;
-    --muted-foreground: 220 20% 40%;
+    --muted-foreground: 220 20% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     /* Soft border */
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
     --ring: 43 90% 58%;
 
     --radius: 1rem;
@@ -59,52 +60,61 @@ All colors MUST be HSL.
     --status-info: 220 90% 50%;
 
     /* Premium shadows - softer and more elegant */
-    --shadow-card: 0 2px 8px 0 rgb(4 29 74 / 0.04), 0 1px 2px 0 rgb(4 29 74 / 0.02);
-    --shadow-card-hover: 0 8px 24px 0 rgb(4 29 74 / 0.08), 0 2px 4px 0 rgb(4 29 74 / 0.04);
-    --shadow-premium: 0 12px 32px 0 rgb(4 29 74 / 0.12), 0 4px 8px 0 rgb(4 29 74 / 0.06);
+    --shadow-card: 0 2px 8px 0 rgb(4 29 74 / 0.04), 0 1px 3px 0 rgb(4 29 74 / 0.02);
+    --shadow-card-hover: 0 12px 28px 0 rgb(4 29 74 / 0.08), 0 4px 8px 0 rgb(4 29 74 / 0.04);
+    --shadow-premium: 0 16px 40px 0 rgb(4 29 74 / 0.12), 0 6px 12px 0 rgb(4 29 74 / 0.06);
+    --shadow-glow: 0 0 40px 0 hsl(43 90% 58% / 0.3);
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(220 90% 15%) 0%, hsl(220 80% 25%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(220 90% 15%) 0%, hsl(220 85% 22%) 100%);
+    --gradient-primary-dark: linear-gradient(135deg, hsl(220 90% 12%) 0%, hsl(220 90% 18%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(43 90% 58%) 0%, hsl(43 95% 65%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 76% 50%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 33% 99%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 90% 15%) 0%, hsl(220 85% 20%) 50%, hsl(220 75% 28%) 100%);
   }
 
   .dark {
-    --background: 220 30% 10%;
+    --background: 220 30% 8%;
     --foreground: 220 20% 95%;
 
-    --card: 220 25% 14%;
+    --card: 220 25% 12%;
     --card-foreground: 220 20% 95%;
 
-    --popover: 220 25% 14%;
+    --popover: 220 25% 12%;
     --popover-foreground: 220 20% 95%;
 
-    --primary: 220 80% 45%;
+    --primary: 220 80% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 220 80% 50%;
+    --primary-hover: 220 80% 55%;
 
     --accent: 43 90% 58%;
     --accent-foreground: 220 30% 10%;
     --accent-hover: 43 90% 65%;
+    --accent-glow: 43 90% 65%;
 
-    --secondary: 220 25% 18%;
+    --secondary: 220 25% 16%;
     --secondary-foreground: 220 20% 95%;
 
-    --muted: 220 25% 18%;
-    --muted-foreground: 220 15% 60%;
+    --muted: 220 25% 16%;
+    --muted-foreground: 220 15% 55%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 20% 22%;
-    --input: 220 20% 22%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
     --ring: 43 90% 58%;
 
     /* Status colors for dark mode */
     --status-success: 142 76% 45%;
     --status-warning: 43 90% 60%;
     --status-info: 220 80% 60%;
+
+    /* Dark mode shadows */
+    --shadow-card: 0 2px 8px 0 rgb(0 0 0 / 0.2), 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --shadow-card-hover: 0 12px 28px 0 rgb(0 0 0 / 0.3), 0 4px 8px 0 rgb(0 0 0 / 0.15);
+    --shadow-premium: 0 16px 40px 0 rgb(0 0 0 / 0.4), 0 6px 12px 0 rgb(0 0 0 / 0.2);
   }
 }
 
@@ -153,41 +163,49 @@ All colors MUST be HSL.
   p {
     @apply text-base leading-relaxed;
   }
+}
 
-  /* Smooth animations */
-  * {
-    @apply transition-colors duration-200;
+@layer utilities {
+  /* Premium hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-premium;
   }
 
-  /* Custom animations for cards */
-  @keyframes float-up {
-    from {
-      transform: translateY(0) scale(1);
-      box-shadow: var(--shadow-card);
-    }
-    to {
-      transform: translateY(-4px) scale(1.01);
-      box-shadow: var(--shadow-premium);
-    }
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
   }
 
-  @keyframes count-up {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  /* Card hover animation */
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-premium);
   }
 
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
+  /* Gold accent glow */
+  .gold-glow {
+    box-shadow: 0 0 30px 0 hsl(43 90% 58% / 0.3);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(220 90% 15%) 0%, hsl(220 80% 35%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-gold {
+    background: linear-gradient(135deg, hsl(43 90% 58%) 0%, hsl(43 95% 70%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }

@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Search, Sparkles, ClipboardList, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const BottomNavigation = () => {
   const location = useLocation();
@@ -20,8 +21,11 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border safe-area-bottom md:hidden">
-      <div className="flex justify-around items-center h-16 px-2">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom md:hidden"
+      style={{ background: 'linear-gradient(180deg, hsl(220 90% 15%) 0%, hsl(220 90% 12%) 100%)' }}
+    >
+      <div className="flex justify-around items-center h-18 px-2 py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path === '/home' && location.pathname === '/dashboard');
@@ -30,15 +34,44 @@ const BottomNavigation = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={cn(
-                "flex flex-col items-center justify-center flex-1 py-2 px-1 rounded-lg transition-colors",
-                isActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
+              className="relative flex flex-col items-center justify-center flex-1 py-2 px-1"
             >
-              <item.icon className={cn("h-5 w-5 mb-1", isActive && "text-primary")} />
-              <span className="text-xs font-medium">{item.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-1 rounded-xl"
+                  style={{ background: 'linear-gradient(135deg, hsl(43 90% 58% / 0.15) 0%, hsl(43 90% 58% / 0.05) 100%)' }}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <motion.div
+                className="relative z-10 flex flex-col items-center"
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className={cn(
+                  "p-1.5 rounded-lg transition-all duration-300",
+                  isActive && "bg-accent/20"
+                )}>
+                  <item.icon 
+                    className={cn(
+                      "h-5 w-5 transition-all duration-300",
+                      isActive 
+                        ? "text-accent" 
+                        : "text-white/60"
+                    )} 
+                  />
+                </div>
+                <span 
+                  className={cn(
+                    "text-xs font-medium mt-1 transition-all duration-300",
+                    isActive 
+                      ? "text-accent" 
+                      : "text-white/60"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </motion.div>
             </Link>
           );
         })}

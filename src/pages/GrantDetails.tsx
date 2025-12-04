@@ -30,7 +30,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import MobileLayout from '@/components/MobileLayout';
 import AppHeader from '@/components/AppHeader';
-import { LoadingScreen } from '@/components/LoadingScreen';
+import { GrantDetailLoading } from '@/components/LoadingScreen';
 
 interface Grant {
   id: string;
@@ -252,7 +252,7 @@ const GrantDetails = () => {
     return null;
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <GrantDetailLoading />;
   if (!grant) return <div className="p-4">Grant not found</div>;
 
   const deadlineInfo = getDeadlineInfo(grant.deadline);

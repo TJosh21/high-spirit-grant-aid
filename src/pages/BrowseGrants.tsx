@@ -21,7 +21,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import MobileLayout from '@/components/MobileLayout';
 import AppHeader from '@/components/AppHeader';
-import { LoadingScreen } from '@/components/LoadingScreen';
+import { LoadingScreen, GrantsListLoading } from '@/components/LoadingScreen';
 
 interface Grant {
   id: string;
