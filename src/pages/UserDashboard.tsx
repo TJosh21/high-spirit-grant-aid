@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobileLayout from '@/components/MobileLayout';
 import AppHeader from '@/components/AppHeader';
-import LoadingScreen from '@/components/LoadingScreen';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 interface DashboardStats {
   savedGrants: number;

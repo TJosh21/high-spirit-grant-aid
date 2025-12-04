@@ -26,7 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import MobileLayout from '@/components/MobileLayout';
 import AppHeader from '@/components/AppHeader';
-import LoadingScreen from '@/components/LoadingScreen';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 interface TrackedGrant {
   id: string;
