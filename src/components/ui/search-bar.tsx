@@ -36,15 +36,15 @@ const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
           type="text"
           value={value}
           className={cn(
-            "w-full bg-card border border-border/50 rounded-full",
+            "w-full bg-card border border-border rounded-full",
             "text-foreground placeholder:text-muted-foreground",
             "transition-all duration-200",
-            "focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50",
-            "shadow-soft hover:shadow-card",
+            "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40",
+            "shadow-sm hover:shadow-md",
             // Size variants
             size === "sm" && "h-10 pl-9 pr-9 text-sm",
             size === "md" && "h-12 pl-11 pr-11 text-base",
-            size === "lg" && "h-14 pl-13 pr-13 text-lg"
+            size === "lg" && "h-14 pl-14 pr-14 text-lg"
           )}
           {...props}
         />
