@@ -17,14 +17,13 @@ import {
   Building2,
   ExternalLink,
   Bookmark,
-  Globe,
   Tag,
   CheckCircle2,
   Clock,
   MapPin,
   Share2,
-  Copy,
-  Check
+  Check,
+  Info
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,6 +72,7 @@ const GrantDetails = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState('');
+  const [copied, setCopied] = useState(false);
   const trackingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -179,8 +179,6 @@ const GrantDetails = () => {
     }
   };
 
-  const [copied, setCopied] = useState(false);
-
   const scrollToTracking = () => {
     trackingRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -218,17 +216,17 @@ const GrantDetails = () => {
     }
   };
 
-  const formatAmount = (min: number | null, max: number | null) => {
-    if (!min && !max) return 'Varies';
-    if (min && max) return `$${(min/1000).toFixed(0)}k–$${(max/1000).toFixed(0)}k`;
-    if (max) return `Up to $${max >= 1000 ? `${(max/1000).toFixed(0)}k` : max.toLocaleString()}`;
-    return `From $${min?.toLocaleString()}`;
-  };
-
   const formatAmountFull = (min: number | null, max: number | null) => {
     if (!min && !max) return 'Amount varies';
     if (min && max) return `$${min.toLocaleString()} – $${max.toLocaleString()}`;
     if (max) return `Up to $${max.toLocaleString()}`;
+    return `From $${min?.toLocaleString()}`;
+  };
+
+  const formatAmountShort = (min: number | null, max: number | null) => {
+    if (!min && !max) return 'Varies';
+    if (min && max) return `$${(min/1000).toFixed(0)}k–$${(max/1000).toFixed(0)}k`;
+    if (max) return `Up to $${max >= 1000 ? `${(max/1000).toFixed(0)}k` : max.toLocaleString()}`;
     return `From $${min?.toLocaleString()}`;
   };
 
@@ -251,7 +249,7 @@ const GrantDetails = () => {
     if (sentences.length > 3) {
       return sentences.slice(0, 6).map(s => s.trim());
     }
-    return null; // Return null to show as paragraph
+    return null;
   };
 
   if (loading) return <LoadingScreen />;
@@ -274,7 +272,7 @@ const GrantDetails = () => {
     <MobileLayout>
       <AppHeader />
       
-      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-6 md:space-y-8 max-w-4xl mx-auto pb-32 md:pb-8">
+      <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-5 md:space-y-6 max-w-4xl mx-auto pb-32 md:pb-8">
         {/* Back Button & Share */}
         <div className="flex items-center justify-between">
           <Link to="/grants">
@@ -287,7 +285,7 @@ const GrantDetails = () => {
             variant="outline" 
             size="sm" 
             onClick={handleShare}
-            className="gap-2 rounded-full"
+            className="gap-2 rounded-full border-border/60"
           >
             {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
             {copied ? 'Copied!' : 'Share'}
@@ -295,20 +293,20 @@ const GrantDetails = () => {
         </div>
 
         {/* Header Card */}
-        <Card className="overflow-hidden shadow-premium">
+        <Card className="overflow-hidden shadow-premium rounded-2xl border-0">
           <CardContent className="p-0">
             <div className="flex flex-col md:flex-row">
               {/* Left Side - Grant Info */}
               <div className="flex-1 p-6 md:p-8">
                 {categoryLabel && (
-                  <Badge className="bg-primary/10 text-primary border-0 text-xs font-medium mb-3">
+                  <Badge className="bg-primary/10 text-primary border-0 text-xs font-medium mb-3 rounded-full px-3">
                     {categoryLabel}
                   </Badge>
                 )}
-                <h1 className="text-xl md:text-2xl font-bold text-primary mb-2">
+                <h1 className="text-xl md:text-2xl font-bold text-primary mb-3 font-display leading-tight">
                   {grant.name}
                 </h1>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <p className="text-muted-foreground flex items-center gap-2">
                     <Building2 className="h-4 w-4 flex-shrink-0" />
                     {grant.sponsor_name}
@@ -324,33 +322,33 @@ const GrantDetails = () => {
 
               {/* Right Side - Key Metrics */}
               <div 
-                className="md:w-64 p-6 md:p-8 border-t md:border-t-0 md:border-l border-border/50"
-                style={{ background: 'linear-gradient(135deg, hsl(220 33% 97%) 0%, hsl(220 33% 95%) 100%)' }}
+                className="md:w-72 p-6 md:p-8 border-t md:border-t-0 md:border-l border-border/30"
+                style={{ background: 'linear-gradient(180deg, hsl(220 33% 98%) 0%, hsl(220 33% 96%) 100%)' }}
               >
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Amount */}
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Grant Amount</p>
-                    <p className="text-2xl md:text-3xl font-bold text-accent">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 font-medium">Grant Amount</p>
+                    <p className="text-2xl md:text-3xl font-bold text-accent font-display">
                       {formatAmountFull(grant.amount_min, grant.amount_max)}
                     </p>
                   </div>
 
                   {/* Deadline */}
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Deadline</p>
-                    <Badge className={`${deadlineInfo.isOpen ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'} border-0 px-3 py-1`}>
-                      <Calendar className="h-3 w-3 mr-1.5" />
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 font-medium">Deadline</p>
+                    <Badge className={`${deadlineInfo.isOpen ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'} border-0 px-3 py-1.5 rounded-full`}>
+                      <Calendar className="h-3.5 w-3.5 mr-1.5" />
                       {deadlineInfo.label}
                     </Badge>
                   </div>
 
                   {/* Status */}
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1.5 font-medium">Status</p>
                     <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${deadlineInfo.isOpen ? 'bg-status-success' : 'bg-destructive'}`} />
-                      <span className={`text-sm font-medium ${deadlineInfo.isOpen ? 'text-status-success' : 'text-destructive'}`}>
+                      <span className={`w-2.5 h-2.5 rounded-full ${deadlineInfo.isOpen ? 'bg-status-success' : 'bg-destructive'}`} />
+                      <span className={`text-sm font-semibold ${deadlineInfo.isOpen ? 'text-status-success' : 'text-destructive'}`}>
                         {deadlineInfo.isOpen ? 'Open' : 'Closed'}
                       </span>
                     </div>
@@ -362,9 +360,10 @@ const GrantDetails = () => {
         </Card>
 
         {/* About this Grant */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+        <Card className="shadow-card rounded-2xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg font-semibold flex items-center gap-2 text-primary">
+              <Info className="h-5 w-5 text-primary" />
               About this Grant
             </CardTitle>
           </CardHeader>
@@ -374,7 +373,7 @@ const GrantDetails = () => {
                 {descriptionBullets.map((bullet, idx) => (
                   <li key={idx} className="flex items-start gap-3 text-muted-foreground">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 flex-shrink-0" />
-                    <span>{bullet}.</span>
+                    <span className="leading-relaxed">{bullet}.</span>
                   </li>
                 ))}
               </ul>
@@ -388,9 +387,9 @@ const GrantDetails = () => {
 
         {/* Eligibility Tags */}
         {allTags.length > 0 && (
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <Card className="shadow-card rounded-2xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg font-semibold flex items-center gap-2 text-primary">
                 <Tag className="h-5 w-5 text-primary" />
                 Eligibility Tags
               </CardTitle>
@@ -398,22 +397,22 @@ const GrantDetails = () => {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {grant.industry_tags?.map(tag => (
-                  <Badge key={tag} className="bg-primary/10 text-primary border-0 px-3 py-1">
+                  <Badge key={tag} className="bg-primary/10 text-primary border-0 px-3 py-1 rounded-full">
                     {tag}
                   </Badge>
                 ))}
                 {grant.geography_tags?.map(tag => (
-                  <Badge key={tag} className="bg-accent/10 text-accent-foreground border-0 px-3 py-1">
+                  <Badge key={tag} className="bg-accent/15 text-accent-foreground border-0 px-3 py-1 rounded-full">
                     {tag}
                   </Badge>
                 ))}
                 {grant.target_audience_tags?.map(tag => (
-                  <Badge key={tag} className="bg-status-success/10 text-status-success border-0 px-3 py-1">
+                  <Badge key={tag} className="bg-status-success/15 text-status-success border-0 px-3 py-1 rounded-full">
                     {tag}
                   </Badge>
                 ))}
                 {grant.business_stage_tags?.map(tag => (
-                  <Badge key={tag} className="bg-status-info/10 text-status-info border-0 px-3 py-1">
+                  <Badge key={tag} className="bg-status-info/15 text-status-info border-0 px-3 py-1 rounded-full">
                     {tag}
                   </Badge>
                 ))}
@@ -424,9 +423,9 @@ const GrantDetails = () => {
 
         {/* Track This Grant */}
         <div ref={trackingRef}>
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <Card className="shadow-card rounded-2xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg font-semibold flex items-center gap-2 text-primary">
                 <Bookmark className="h-5 w-5 text-accent" />
                 Track This Grant
               </CardTitle>
@@ -435,13 +434,13 @@ const GrantDetails = () => {
               {user ? (
                 <>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Application Status</label>
+                    <label className="text-sm font-medium mb-2 block text-primary">Application Status</label>
                     <Select 
                       value={userGrant?.status || ''} 
                       onValueChange={(v) => handleSaveGrant(v)}
                       disabled={saving}
                     >
-                      <SelectTrigger className="rounded-xl h-12 bg-card">
+                      <SelectTrigger className="rounded-xl h-12 bg-card border-border/60">
                         <SelectValue placeholder="Select a status..." />
                       </SelectTrigger>
                       <SelectContent className="bg-card">
@@ -459,13 +458,13 @@ const GrantDetails = () => {
 
                   {userGrant && (
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Your Notes</label>
+                      <label className="text-sm font-medium mb-2 block text-primary">Your Notes</label>
                       <Textarea
-                        placeholder="Add notes about this grant (deadline reminders, application progress, etc.)..."
+                        placeholder="Add notes about this grant..."
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         rows={3}
-                        className="rounded-xl resize-none"
+                        className="rounded-xl resize-none border-border/60"
                       />
                     </div>
                   )}
@@ -486,6 +485,7 @@ const GrantDetails = () => {
                         <Button 
                           onClick={() => handleSaveGrant(userGrant.status)}
                           disabled={saving}
+                          className="rounded-xl"
                         >
                           Save Notes
                         </Button>
@@ -494,7 +494,7 @@ const GrantDetails = () => {
                         <Button 
                           onClick={() => handleSaveGrant('saved')}
                           disabled={saving}
-                          className="gap-2"
+                          className="gap-2 rounded-xl bg-accent text-primary hover:bg-accent-hover"
                         >
                           <Bookmark className="h-4 w-4" />
                           Save to My Grants
@@ -504,13 +504,10 @@ const GrantDetails = () => {
                   </div>
                 </>
               ) : (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground mb-4">Sign in to track this grant and save your progress</p>
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground mb-4">Sign in to track this grant</p>
                   <Link to="/auth">
-                    <Button className="gap-2">
-                      <Bookmark className="h-4 w-4" />
-                      Sign in to Track
-                    </Button>
+                    <Button className="rounded-xl">Sign In</Button>
                   </Link>
                 </div>
               )}
@@ -518,72 +515,60 @@ const GrantDetails = () => {
           </Card>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          {grant.application_link && (
-            <Button 
-              asChild
-              size="lg"
-              className="w-full gap-2 h-12 rounded-xl"
-            >
-              <a 
-                href={grant.application_link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Apply Now
-              </a>
-            </Button>
-          )}
-
-          {grant.website_url && (
-            <Button 
-              asChild
-              variant="outline"
-              size="lg"
-              className="w-full gap-2 h-12 rounded-xl"
-            >
-              <a 
-                href={grant.website_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                <Globe className="h-4 w-4" />
-                Visit Official Website
-              </a>
-            </Button>
-          )}
-        </div>
+        {/* External Links */}
+        {(grant.application_link || grant.website_url) && (
+          <Card className="shadow-card rounded-2xl">
+            <CardContent className="p-5">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {grant.application_link && (
+                  <a 
+                    href={grant.application_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1"
+                  >
+                    <Button className="w-full gap-2 rounded-xl bg-primary hover:bg-primary-hover">
+                      <ExternalLink className="h-4 w-4" />
+                      Apply Now
+                    </Button>
+                  </a>
+                )}
+                {grant.website_url && (
+                  <a 
+                    href={grant.website_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1"
+                  >
+                    <Button variant="outline" className="w-full gap-2 rounded-xl border-border/60">
+                      <ExternalLink className="h-4 w-4" />
+                      Visit Website
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Mobile Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-card border-t border-border p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-50">
-        <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
-          <div className="flex-1 min-w-0">
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-card border-t border-border/50 p-4 safe-area-bottom shadow-premium">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-primary truncate">
-              {formatAmount(grant.amount_min, grant.amount_max)} · {grant.industry_tags?.[0] || 'Grant'}
+              {formatAmountShort(grant.amount_min, grant.amount_max)} · {grant.industry_tags?.[0] || 'Grant'}
             </p>
             <p className="text-xs text-muted-foreground">
-              {deadlineInfo.days !== null ? deadlineInfo.daysLabel : 'Rolling deadline'}
+              {deadlineInfo.isOpen ? deadlineInfo.daysLabel : 'Closed'}
             </p>
           </div>
           <Button 
-            onClick={user ? scrollToTracking : () => {}}
-            className="gap-2 rounded-full px-6"
-            asChild={!user}
+            onClick={scrollToTracking}
+            className="rounded-xl bg-accent text-primary hover:bg-accent-hover gap-2 flex-shrink-0"
           >
-            {user ? (
-              <>
-                <Bookmark className="h-4 w-4" />
-                Track Grant
-              </>
-            ) : (
-              <Link to="/auth">
-                <Bookmark className="h-4 w-4" />
-                Sign in to Track
-              </Link>
-            )}
+            <Bookmark className="h-4 w-4" />
+            Track Grant
           </Button>
         </div>
       </div>
