@@ -21,7 +21,10 @@ import {
   Tag,
   CheckCircle2,
   Clock,
-  MapPin
+  MapPin,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -176,8 +179,43 @@ const GrantDetails = () => {
     }
   };
 
+  const [copied, setCopied] = useState(false);
+
   const scrollToTracking = () => {
     trackingRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: grant?.name || 'Grant Opportunity',
+      text: `Check out this grant: ${grant?.name} - ${formatAmountFull(grant?.amount_min || null, grant?.amount_max || null)}`,
+      url: shareUrl,
+    };
+
+    if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share(shareData);
+        toast.success('Shared successfully');
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success('Link copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy link');
+    }
   };
 
   const formatAmount = (min: number | null, max: number | null) => {
@@ -237,13 +275,24 @@ const GrantDetails = () => {
       <AppHeader />
       
       <div className="px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-6 md:space-y-8 max-w-4xl mx-auto pb-32 md:pb-8">
-        {/* Back Button */}
-        <Link to="/grants">
-          <Button variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-primary">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Grants
+        {/* Back Button & Share */}
+        <div className="flex items-center justify-between">
+          <Link to="/grants">
+            <Button variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-primary">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Grants
+            </Button>
+          </Link>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleShare}
+            className="gap-2 rounded-full"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+            {copied ? 'Copied!' : 'Share'}
           </Button>
-        </Link>
+        </div>
 
         {/* Header Card */}
         <Card className="overflow-hidden shadow-premium">
