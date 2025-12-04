@@ -89,6 +89,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_coaching_sessions: {
+        Row: {
+          ai_polished_answer: string | null
+          created_at: string | null
+          grant_id: string | null
+          id: string
+          original_question: string
+          suggestions: string | null
+          user_id: string | null
+          user_rough_answer: string
+        }
+        Insert: {
+          ai_polished_answer?: string | null
+          created_at?: string | null
+          grant_id?: string | null
+          id?: string
+          original_question: string
+          suggestions?: string | null
+          user_id?: string | null
+          user_rough_answer: string
+        }
+        Update: {
+          ai_polished_answer?: string | null
+          created_at?: string | null
+          grant_id?: string | null
+          id?: string
+          original_question?: string
+          suggestions?: string | null
+          user_id?: string | null
+          user_rough_answer?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_coaching_sessions_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage_logs: {
         Row: {
           created_at: string
@@ -985,6 +1026,44 @@ export type Database = {
             columns: ["answer_id"]
             isOneToOne: false
             referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_grants: {
+        Row: {
+          created_at: string | null
+          grant_id: string
+          id: string
+          last_updated_by_user_at: string | null
+          notes: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          grant_id: string
+          id?: string
+          last_updated_by_user_at?: string | null
+          notes?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          grant_id?: string
+          id?: string
+          last_updated_by_user_at?: string | null
+          notes?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_grants_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
             referencedColumns: ["id"]
           },
         ]
