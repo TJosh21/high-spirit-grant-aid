@@ -18,6 +18,8 @@ import Features from "./pages/Features";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
+import Resources from "./pages/Resources";
+import ResourceArticle from "./pages/ResourceArticle";
 import UserDashboard from "./pages/UserDashboard";
 import BrowseGrants from "./pages/BrowseGrants";
 import GrantDetails from "./pages/GrantDetails";
@@ -55,6 +57,8 @@ function AppContent() {
       <Route path="/contact" element={<Contact />} />
       <Route path="/about" element={<About />} />
       <Route path="/faq" element={<FAQ />} />
+      <Route path="/resources" element={<Resources />} />
+      <Route path="/resources/:articleId" element={<ResourceArticle />} />
       
       {/* Protected user routes */}
       <Route path="/home" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
