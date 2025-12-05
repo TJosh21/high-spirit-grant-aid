@@ -4,9 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Calendar, Clock, ArrowRight, BookOpen, Lightbulb, Trophy, TrendingUp } from "lucide-react";
+import { Search, Calendar, Clock, ArrowRight, BookOpen, Lightbulb, Trophy, TrendingUp, CheckCircle, Loader2 } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const articles = [
   {
@@ -81,6 +83,39 @@ const categories = [
 const Resources = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterEmail.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSubscribing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("subscribe-newsletter", {
+        body: { email: newsletterEmail, source: "resources_page" },
+      });
+
+      if (error) throw error;
+
+      if (data.alreadySubscribed) {
+        toast.info(data.message);
+      } else {
+        toast.success(data.message);
+        setSubscribed(true);
+      }
+      setNewsletterEmail("");
+    } catch (error: any) {
+      console.error("Newsletter subscription error:", error);
+      toast.error("Failed to subscribe. Please try again.");
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   const filteredArticles = articles.filter((article) => {
     const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -242,22 +277,51 @@ const Resources = () => {
       <section className="py-12 md:py-16 bg-gradient-to-r from-primary to-primary/90">
         <div className="container mx-auto px-4">
           <Card className="max-w-2xl mx-auto text-center p-8 md:p-12 bg-white/95 backdrop-blur">
-            <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">
-              Get Grant Tips in Your Inbox
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Subscribe to receive weekly grant opportunities, tips, and success stories directly to your email.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="h-12"
-              />
-              <Button className="h-12 px-8 bg-accent hover:bg-accent/90 text-accent-foreground">
-                Subscribe
-              </Button>
-            </div>
+            {subscribed ? (
+              <>
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">
+                  You're Subscribed!
+                </h2>
+                <p className="text-muted-foreground">
+                  Thank you for subscribing. You'll receive grant tips and opportunities in your inbox.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">
+                  Get Grant Tips in Your Inbox
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Subscribe to receive weekly grant opportunities, tips, and success stories directly to your email.
+                </p>
+                <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    className="h-12"
+                    disabled={isSubscribing}
+                    required
+                  />
+                  <Button 
+                    type="submit"
+                    className="h-12 px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
+                    disabled={isSubscribing}
+                  >
+                    {isSubscribing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Subscribing...
+                      </>
+                    ) : (
+                      "Subscribe"
+                    )}
+                  </Button>
+                </form>
+              </>
+            )}
           </Card>
         </div>
       </section>
