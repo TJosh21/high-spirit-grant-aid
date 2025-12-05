@@ -20,6 +20,8 @@ import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import Resources from "./pages/Resources";
 import ResourceArticle from "./pages/ResourceArticle";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import UserDashboard from "./pages/UserDashboard";
 import BrowseGrants from "./pages/BrowseGrants";
 import GrantDetails from "./pages/GrantDetails";
@@ -59,6 +61,8 @@ function AppContent() {
       <Route path="/faq" element={<FAQ />} />
       <Route path="/resources" element={<Resources />} />
       <Route path="/resources/:articleId" element={<ResourceArticle />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
       
       {/* Protected user routes */}
       <Route path="/home" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
