@@ -132,8 +132,8 @@ const Welcome = () => {
               <Link to="/features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</Link>
               <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
               <Link to="/grants" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Browse Grants</Link>
+              <Link to="/resources" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Resources</Link>
               <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</Link>
-              <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
               <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
             </div>
             <div className="flex items-center gap-3">
